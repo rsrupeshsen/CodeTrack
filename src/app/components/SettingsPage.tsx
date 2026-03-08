@@ -1,3 +1,5 @@
+import React from "react";
+
 import { useState } from "react";
 import { Save, Github, Linkedin, Twitter, Globe, Copy, Check, ExternalLink } from "lucide-react";
 import { toast, Toaster } from "sonner";

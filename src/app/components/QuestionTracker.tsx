@@ -1,3 +1,5 @@
+import React from "react";
+
 import { useState } from "react";
 import { Plus, Search, Filter, X, StickyNote, Check } from "lucide-react";
 

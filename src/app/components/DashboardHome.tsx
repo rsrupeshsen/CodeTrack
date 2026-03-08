@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { getLeetCodeStats } from "../../lib/leetcode";
+import { getGitHubData } from "../../lib/github";
 import { useNavigate } from "react-router";
 import {
   BarChart,
@@ -19,12 +21,6 @@ import {
   HeatmapSkeleton,
 } from "./Skeleton";
 import { useUser } from "./UserContext";
-
-const difficultyData = [
-  { name: "Easy", value: 425, color: "#10b981" },
-  { name: "Medium", value: 520, color: "#f59e0b" },
-  { name: "Hard", value: 302, color: "#ef4444" },
-];
 
 const platformData = [
   { name: "Jan", LeetCode: 45, CodeChef: 20, GitHub: 12 },
@@ -80,22 +76,80 @@ function EmptyPlatformCard({
 }
 
 export function DashboardHome() {
+  const [lcStats, setLcStats] = useState<any>(null);
+  const [ghData, setGhData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useUser();
   const navigate = useNavigate();
 
   const firstName = user.name.split(" ")[0];
 
+  // Inside component so it updates when lcStats loads
+  const difficultyData = [
+    { name: "Easy",   value: lcStats?.easySolved   ?? 0, color: "#10b981" },
+    { name: "Medium", value: lcStats?.mediumSolved  ?? 0, color: "#f59e0b" },
+    { name: "Hard",   value: lcStats?.hardSolved    ?? 0, color: "#ef4444" },
+  ];
+
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 2000);
-    return () => clearTimeout(timer);
-  }, []);
+    async function loadStats() {
+      try {
+        // user.leetcode → maps to lc_username in Appwrite DB
+        if (user.leetcode) {
+          const lc = await getLeetCodeStats(user.leetcode);
+          if (lc) setLcStats(lc);
+        }
+
+        // user.github → maps to gh_username in Appwrite DB
+        if (user.github) {
+          const gh = await getGitHubData(user.github);
+          if (gh) setGhData(gh);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+
+      setLoading(false);
+    }
+
+    loadStats();
+  }, [user.leetcode, user.github]);
 
   const statsCards: StatsCardConfig[] = [
-    { label: "Total Problems Solved", value: "1,247", change: "+23 this week", icon: Code, color: "#10b981", platform: null },
-    { label: "LeetCode Rating", value: "1,856", change: "+42 pts", icon: TrendingUp, color: "#3b82f6", platform: "leetcode" },
-    { label: "CodeChef Stars", value: "5★", change: "Division 1", icon: Award, color: "#f59e0b", platform: "codechef" },
-    { label: "GitHub Repositories", value: "42", change: "8 active", icon: FolderGit2, color: "#8b5cf6", platform: "github" },
+    {
+      label: "Total Problems Solved",
+      value: lcStats ? String(lcStats.totalSolved) : "0",
+      change: lcStats
+        ? `${lcStats.easySolved}E · ${lcStats.mediumSolved}M · ${lcStats.hardSolved}H`
+        : "",
+      icon: Code,
+      color: "#10b981",
+      platform: null,
+    },
+    {
+      label: "LeetCode Rating",
+      value: lcStats?.contestRating ? String(lcStats.contestRating) : "0",
+      change: "",
+      icon: TrendingUp,
+      color: "#3b82f6",
+      platform: "leetcode",
+    },
+    {
+      label: "CodeChef Stars",
+      value: user.codechef ? "Connected" : "0",
+      change: "",
+      icon: Award,
+      color: "#f59e0b",
+      platform: "codechef",
+    },
+    {
+      label: "GitHub Repositories",
+      value: ghData ? String(ghData.public_repos) : "0",
+      change: ghData ? `${ghData.followers} followers` : "",
+      icon: FolderGit2,
+      color: "#8b5cf6",
+      platform: "github",
+    },
   ];
 
   const platformIcons: Record<string, React.ReactNode> = {
@@ -124,11 +178,7 @@ export function DashboardHome() {
         {loading
           ? Array.from({ length: 4 }, (_, i) => <StatsCardSkeleton key={i} />)
           : statsCards.map((card) => {
-              // Check if platform is connected
-              if (
-                card.platform &&
-                !user[card.platform as keyof typeof user]
-              ) {
+              if (card.platform && !user[card.platform as keyof typeof user]) {
                 return (
                   <EmptyPlatformCard
                     key={card.label}
@@ -154,9 +204,11 @@ export function DashboardHome() {
                     {card.value}
                   </p>
                   <p className="text-muted-foreground text-xs">{card.label}</p>
-                  <p className="text-primary text-xs mt-1" style={{ fontWeight: 500 }}>
-                    {card.change}
-                  </p>
+                  {card.change && (
+                    <p className="text-primary text-xs mt-1" style={{ fontWeight: 500 }}>
+                      {card.change}
+                    </p>
+                  )}
                 </div>
               );
             })}
@@ -206,7 +258,10 @@ export function DashboardHome() {
               <div className="flex justify-center gap-4 mt-2">
                 {difficultyData.map((d) => (
                   <div key={d.name} className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
+                    <div
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{ backgroundColor: d.color }}
+                    />
                     <span className="text-xs text-muted-foreground">
                       {d.name} ({d.value})
                     </span>
@@ -233,9 +288,9 @@ export function DashboardHome() {
                       color: "#e5e7eb",
                     }}
                   />
-                  <Bar key="leetcode" dataKey="LeetCode" fill="#10b981" radius={[4, 4, 0, 0]} />
-                  <Bar key="codechef" dataKey="CodeChef" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-                  <Bar key="github" dataKey="GitHub" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="LeetCode" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="CodeChef" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="GitHub"   fill="#3b82f6" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

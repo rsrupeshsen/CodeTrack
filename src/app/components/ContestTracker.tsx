@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Clock, Bell, ExternalLink, Calendar } from "lucide-react";
 import { ContestCardSkeleton } from "./Skeleton";
 
