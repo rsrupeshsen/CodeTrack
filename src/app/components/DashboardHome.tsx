@@ -22,15 +22,9 @@ import {
 } from "./Skeleton";
 import { useUser } from "./UserContext";
 
-const platformData = [
-  { name: "Jan", LeetCode: 45, CodeChef: 20, GitHub: 12 },
-  { name: "Feb", LeetCode: 52, CodeChef: 28, GitHub: 15 },
-  { name: "Mar", LeetCode: 61, CodeChef: 35, GitHub: 18 },
-  { name: "Apr", LeetCode: 55, CodeChef: 30, GitHub: 22 },
-  { name: "May", LeetCode: 70, CodeChef: 42, GitHub: 25 },
-  { name: "Jun", LeetCode: 68, CodeChef: 38, GitHub: 20 },
-];
+const heatmapColors = ["#1e293b", "#064e3b", "#059669", "#10b981", "#34d399"];
 
+// Generate heatmap once (random placeholder — replace with real data when available)
 const activityData = Array.from({ length: 52 }, (_, weekIdx) =>
   Array.from({ length: 7 }, (_, dayIdx) => ({
     week: weekIdx,
@@ -38,8 +32,6 @@ const activityData = Array.from({ length: 52 }, (_, weekIdx) =>
     count: Math.floor(Math.random() * 5),
   }))
 ).flat();
-
-const heatmapColors = ["#1e293b", "#064e3b", "#059669", "#10b981", "#34d399"];
 
 interface StatsCardConfig {
   label: string;
@@ -82,25 +74,42 @@ export function DashboardHome() {
   const { user } = useUser();
   const navigate = useNavigate();
 
-  const firstName = user.name.split(" ")[0];
+  const firstName = user.name ? user.name.split(" ")[0] : "Developer";
 
-  // Inside component so it updates when lcStats loads
+  // Difficulty pie chart — driven by real LeetCode data
   const difficultyData = [
     { name: "Easy",   value: lcStats?.easySolved   ?? 0, color: "#10b981" },
     { name: "Medium", value: lcStats?.mediumSolved  ?? 0, color: "#f59e0b" },
     { name: "Hard",   value: lcStats?.hardSolved    ?? 0, color: "#ef4444" },
   ];
 
+  // Platform Comparison bar chart — built from REAL fetched data
+  const platformComparisonData = [
+    {
+      name: "LeetCode",
+      value: lcStats?.totalSolved ?? 0,
+      fill: "#10b981",
+    },
+    {
+      name: "CodeChef",
+      value: user.codechef ? 1 : 0, // CodeChef API not yet integrated — show connected status
+      fill: "#8b5cf6",
+    },
+    {
+      name: "GitHub",
+      value: ghData?.public_repos ?? 0,
+      fill: "#3b82f6",
+    },
+  ];
+
   useEffect(() => {
     async function loadStats() {
       try {
-        // user.leetcode → maps to lc_username in Appwrite DB
         if (user.leetcode) {
           const lc = await getLeetCodeStats(user.leetcode);
           if (lc) setLcStats(lc);
         }
 
-        // user.github → maps to gh_username in Appwrite DB
         if (user.github) {
           const gh = await getGitHubData(user.github);
           if (gh) setGhData(gh);
@@ -128,8 +137,8 @@ export function DashboardHome() {
     },
     {
       label: "LeetCode Rating",
-      value: lcStats?.contestRating ? String(lcStats.contestRating) : "0",
-      change: "",
+      value: lcStats?.contestRating ? String(lcStats.contestRating) : "—",
+      change: lcStats?.contestRating ? "" : "No contest history",
       icon: TrendingUp,
       color: "#3b82f6",
       platform: "leetcode",
@@ -230,53 +239,61 @@ export function DashboardHome() {
               <h3 className="text-foreground mb-4" style={{ fontWeight: 600 }}>
                 Difficulty Distribution
               </h3>
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie
-                    data={difficultyData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={80}
-                    dataKey="value"
-                    strokeWidth={0}
-                  >
-                    {difficultyData.map((entry) => (
-                      <Cell key={entry.name} fill={entry.color} />
+              {lcStats ? (
+                <>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <PieChart>
+                      <Pie
+                        data={difficultyData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={55}
+                        outerRadius={80}
+                        dataKey="value"
+                        strokeWidth={0}
+                      >
+                        {difficultyData.map((entry) => (
+                          <Cell key={entry.name} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#1e293b",
+                          border: "1px solid rgba(148,163,184,0.15)",
+                          borderRadius: "12px",
+                          color: "#e5e7eb",
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="flex justify-center gap-4 mt-2">
+                    {difficultyData.map((d) => (
+                      <div key={d.name} className="flex items-center gap-1.5">
+                        <div
+                          className="w-2.5 h-2.5 rounded-full"
+                          style={{ backgroundColor: d.color }}
+                        />
+                        <span className="text-xs text-muted-foreground">
+                          {d.name} ({d.value})
+                        </span>
+                      </div>
                     ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#1e293b",
-                      border: "1px solid rgba(148,163,184,0.15)",
-                      borderRadius: "12px",
-                      color: "#e5e7eb",
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="flex justify-center gap-4 mt-2">
-                {difficultyData.map((d) => (
-                  <div key={d.name} className="flex items-center gap-1.5">
-                    <div
-                      className="w-2.5 h-2.5 rounded-full"
-                      style={{ backgroundColor: d.color }}
-                    />
-                    <span className="text-xs text-muted-foreground">
-                      {d.name} ({d.value})
-                    </span>
                   </div>
-                ))}
-              </div>
+                </>
+              ) : (
+                <div className="flex items-center justify-center h-[200px] text-muted-foreground text-sm">
+                  Connect LeetCode to see difficulty breakdown
+                </div>
+              )}
             </div>
 
-            {/* Platform Comparison */}
+            {/* Platform Comparison — uses REAL data */}
             <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-5">
               <h3 className="text-foreground mb-4" style={{ fontWeight: 600 }}>
                 Platform Comparison
               </h3>
               <ResponsiveContainer width="100%" height={230}>
-                <BarChart data={platformData}>
+                <BarChart data={platformComparisonData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.1)" />
                   <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} />
                   <YAxis stroke="#94a3b8" fontSize={12} />
@@ -287,12 +304,33 @@ export function DashboardHome() {
                       borderRadius: "12px",
                       color: "#e5e7eb",
                     }}
+                    formatter={(value: number, name: string) => {
+                      if (name === "value") {
+                        return [value, "Count"];
+                      }
+                      return [value, name];
+                    }}
                   />
-                  <Bar dataKey="LeetCode" fill="#10b981" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="CodeChef" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="GitHub"   fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                    {platformComparisonData.map((entry) => (
+                      <Cell key={entry.name} fill={entry.fill} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
+              <div className="flex justify-center gap-6 mt-2">
+                {platformComparisonData.map((d) => (
+                  <div key={d.name} className="flex items-center gap-1.5">
+                    <div
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{ backgroundColor: d.fill }}
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      {d.name}: {d.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </>
         )}
