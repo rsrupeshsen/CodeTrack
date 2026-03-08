@@ -1,4 +1,5 @@
-// Add empty state UI for when no platform username is connected.
+/*
+Add empty state UI for when no platform username is connected.
 In the Dashboard page, if lc_username is null/empty:
 Replace the LeetCode stats card with an empty state card showing:
 - A faded LeetCode logo icon
@@ -13,13 +14,13 @@ Show a centered empty state with:
 - Button: 'Go to Settings'
 Style: bg-card, border border-border border-dashed, rounded-2xl, p-8
 Keep consistent with the existing dark design system.
-FIGMA
+DESIGN
 PROMPT 3 Public Profile Page (/user/[username])
-CodeFolio · Figma Prompts + Backend Guide Complete Improvement Playbook
+CodeFolio · Design Prompts + Backend Guide Complete Improvement Playbook
 CodeFolio Improvement Guide · March 2026 Page 6
-// Create a new PUBLIC profile page accessible at /user/:username
-// This is DIFFERENT from the dashboard Portfolio tab.
-// This page has NO sidebar and works without login.
+Create a new PUBLIC profile page accessible at /user/:username
+This is DIFFERENT from the dashboard Portfolio tab.
+This page has NO sidebar and works without login.
 Create a new file: src/app/components/PublicProfilePage.tsx
 Add route in routes.ts: { path: '/user/:username', Component: PublicProfilePage }
 Page layout (no sidebar, full width, max-w-4xl mx-auto):
@@ -38,11 +39,11 @@ Repo name, description, language dot+label, stars count
 SECTION 5 — Footer CTA:
 'Create your own CodeFolio — it's free' + Sign Up button
 No auth required. Uses dark theme. Fully mobile responsive.
-CodeFolio · Figma Prompts + Backend Guide Complete Improvement Playbook
+CodeFolio · Design Prompts + Backend Guide Complete Improvement Playbook
 CodeFolio Improvement Guide · March 2026 Page 7
-FIGMA
+DESIGN
 PROMPT 4 Fix Auth Forms — Validation + Error Messages
-// Improve Login and Signup pages with proper form validation and error UI.
+Improve Login and Signup pages with proper form validation and error UI.
 LOGIN PAGE changes:
 1. Add state: const [error, setError] = useState('')
 2. Validate on submit: if email empty → setError('Email is required')
@@ -60,11 +61,11 @@ SIGNUP PAGE changes:
 4. Show password strength indicator (weak/medium/strong) below password field
 Use colored bar: red < 6 chars, orange 6-10 chars, green 10+ chars
 Keep all existing dark styling. Just add the validation logic and error UI.
-FIGMA
+DESIGN
 PROMPT 5 Settings — Add Username + Public URL Display
-CodeFolio · Figma Prompts + Backend Guide Complete Improvement Playbook
+CodeFolio · Design Prompts + Backend Guide Complete Improvement Playbook
 CodeFolio Improvement Guide · March 2026 Page 8
-// Add a username field and public profile URL display to the Settings page.
+Add a username field and public profile URL display to the Settings page.
 In SettingsPage.tsx, add to the form state:
 username: 'johndoe' (new field)
 Add this new field AFTER the Full Name field:
@@ -80,9 +81,9 @@ Card has a subtle indigo border: border-primary/30
 Also add: 'View public profile →' link above the Save button
 that opens /user/{username} in a new tab.
 Keep dark theme. Add to existing SettingsPage.tsx.
-FIGMA
+DESIGN
 PROMPT 6 Dashboard — Dynamic User Name
-// Replace all hardcoded 'John Doe' and 'JD' references with dynamic data.
+Replace all hardcoded 'John Doe' and 'JD' references with dynamic data.
 Create a user context or pass user data as props.
 In DashboardLayout.tsx:
 Replace hardcoded 'John Doe' in the topbar with {user?.name || 'Developer'}
@@ -95,11 +96,11 @@ const mockUser = { name: 'Rupesh Kumar', email: 'rupesh@example.com' }
 Pass it as props to child pages via React Router context or props.
 This makes it easy to swap in real Supabase auth data later.
 Do not change any styling — just make the name dynamic.
-CodeFolio · Figma Prompts + Backend Guide Complete Improvement Playbook
+CodeFolio · Design Prompts + Backend Guide Complete Improvement Playbook
 CodeFolio Improvement Guide · March 2026 Page 9
-FIGMA
+DESIGN
 PROMPT 7 AI Assistant — Connect to Real OpenAI API
-// Wire up the AI Coding Assistant to call a real backend API route.
+Wire up the AI Coding Assistant to call a real backend API route.
 In AICodingAssistant.tsx, replace the fake setTimeout response with:
 const handleSend = async (text?: string) => {
 const msg = text || input.trim()
@@ -128,3 +129,4 @@ setIsTyping(false)
 }
 NOTE: The actual /api/ai-suggest backend is built separately (see Part 3).
 For now just add this fetch call — it will work once the backend is done.
+*/
