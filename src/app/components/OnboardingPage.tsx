@@ -1,33 +1,18 @@
+import React from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Code2, Github, ArrowRight, SkipForward, CheckCircle2 } from "lucide-react";
+import { useUser } from "./UserContext";
 
 const platforms = [
-  {
-    id: "leetcode",
-    name: "LeetCode",
-    icon: "🧩",
-    color: "#f59e0b",
-    placeholder: "your_leetcode_username",
-  },
-  {
-    id: "codechef",
-    name: "CodeChef",
-    icon: "👨‍🍳",
-    color: "#8b5cf6",
-    placeholder: "your_codechef_username",
-  },
-  {
-    id: "github",
-    name: "GitHub",
-    icon: null,
-    color: "#e5e7eb",
-    placeholder: "your_github_username",
-  },
+  { id: "leetcode", name: "LeetCode", icon: "🧩", color: "#f59e0b", placeholder: "your_leetcode_username" },
+  { id: "codechef", name: "CodeChef", icon: "👨‍🍳", color: "#8b5cf6", placeholder: "your_codechef_username" },
+  { id: "github", name: "GitHub", icon: null, color: "#e5e7eb", placeholder: "your_github_username" },
 ];
 
 export function OnboardingPage() {
   const navigate = useNavigate();
+  const { user, setUser } = useUser();
   const [usernames, setUsernames] = useState({ leetcode: "", codechef: "", github: "" });
   const [connected, setConnected] = useState<string[]>([]);
 
@@ -36,6 +21,15 @@ export function OnboardingPage() {
       .filter(([, v]) => v.trim())
       .map(([k]) => k);
     setConnected(newConnected);
+
+    // ✅ Actually save usernames to UserContext (persists to localStorage)
+    setUser({
+      ...user,
+      leetcode: usernames.leetcode.trim(),
+      codechef: usernames.codechef.trim(),
+      github: usernames.github.trim(),
+    });
+
     setTimeout(() => navigate("/dashboard"), 1000);
   };
 

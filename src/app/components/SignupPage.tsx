@@ -3,6 +3,7 @@ import React from "react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Code2, Eye, EyeOff, Loader2 } from "lucide-react";
+import { signUp, signInWithGoogle } from "../../lib/auth";
 
 function getPasswordStrength(pw: string): { label: string; color: string; width: string } {
   if (pw.length === 0) return { label: "", color: "", width: "0%" };
@@ -28,13 +29,33 @@ export function SignupPage() {
     if (!form.name.trim()) { setError("Full name is required"); return; }
     if (!form.email.trim()) { setError("Email is required"); return; }
     if (!form.password.trim()) { setError("Password is required"); return; }
+    if (form.password.length < 8) { setError("Password must be at least 8 characters"); return; }
     if (form.password !== form.confirm) { setError("Passwords do not match"); return; }
     if (!termsAccepted) { setError("You must accept the terms and conditions"); return; }
 
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setIsLoading(false);
-    navigate("/onboarding");
+    try {
+      await signUp(form.email, form.password, form.name);
+      navigate("/onboarding");
+    } catch (err: any) {
+      console.error("Signup error:", err);
+      if (err?.code === 409 || err?.message?.includes("already exists")) {
+        setError("An account with this email already exists. Try logging in.");
+      } else {
+        setError(err?.message || "Failed to create account. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (err: any) {
+      console.error("Google signup error:", err);
+      setError(err?.message || "Google sign up failed. Please try again.");
+    }
   };
 
   return (
@@ -189,7 +210,7 @@ export function SignupPage() {
           </div>
 
           <button
-            onClick={() => navigate("/onboarding")}
+            onClick={handleGoogleSignup}
             className="w-full border border-border text-foreground py-3 rounded-xl hover:bg-card transition-all flex items-center justify-center gap-3 cursor-pointer"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">

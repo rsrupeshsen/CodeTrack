@@ -1,5 +1,3 @@
-import React from "react";
-
 import { createContext, useContext, useState, type ReactNode } from "react";
 
 export interface UserData {
@@ -9,7 +7,7 @@ export interface UserData {
   bio: string;
   techStack: string;
   leetcode: string;
-  codechef: string;
+  gfg: string;
   github: string;
   website: string;
   linkedin: string;
@@ -21,32 +19,37 @@ interface UserContextType {
   setUser: (user: UserData) => void;
 }
 
+// Empty defaults — user fills these in via Settings or Onboarding
 const defaultUser: UserData = {
-  name: "",
+  name: "Developer",
   email: "",
   username: "",
   bio: "",
   techStack: "",
   leetcode: "",
-  codechef: "",
+  gfg: "",
   github: "",
   website: "",
   linkedin: "",
   twitter: "",
 };
 
-const UserContext = createContext<UserContextType | undefined>(undefined);
+const UserContext = createContext<UserContextType>({
+  user: defaultUser,
+  setUser: () => {},
+});
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserData>(() => {
+    // Restore from localStorage if previously saved
     try {
       const saved = localStorage.getItem("codefolio_user");
       if (saved) {
-        const parsed = JSON.parse(saved) as Partial<UserData>;
+        const parsed = JSON.parse(saved);
         return { ...defaultUser, ...parsed };
       }
-    } catch (err) {
-      console.error("Failed to parse saved user:", err);
+    } catch {
+      // ignore parse errors
     }
     return defaultUser;
   });
@@ -55,8 +58,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setUser(newUser);
     try {
       localStorage.setItem("codefolio_user", JSON.stringify(newUser));
-    } catch (err) {
-      console.error("Failed to save user:", err);
+    } catch {
+      // ignore storage errors
     }
   };
 
@@ -68,9 +71,5 @@ export function UserProvider({ children }: { children: ReactNode }) {
 }
 
 export function useUser() {
-  const context = useContext(UserContext);
-  if (!context) {
-    throw new Error("useUser must be used inside UserProvider");
-  }
-  return context;
+  return useContext(UserContext);
 }

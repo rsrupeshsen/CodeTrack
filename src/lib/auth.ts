@@ -17,11 +17,8 @@ export const signInWithGoogle = () =>
   );
 
 export async function getUser() {
-  try {
-    return await account.get();
-  } catch {
-    return null;
-  }
+  try { return await account.get(); }
+  catch { return null; }
 }
 
 export const signOut = () => account.deleteSession("current");

@@ -1,3 +1,4 @@
+import React from "react";
 import { useState, useRef, useEffect } from "react";
 import { Send, Sparkles, Code, Target, Flame, Zap } from "lucide-react";
 import { useUser } from "./UserContext";

@@ -1,9 +1,11 @@
 import React from "react";
 
 import { useState } from "react";
-import { Save, Github, Linkedin, Twitter, Globe, Copy, Check, ExternalLink } from "lucide-react";
+import { Save, Github, Linkedin, Twitter, Globe, Copy, Check, ExternalLink, Loader2 } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { useUser } from "./UserContext";
+import { getUser } from "../../lib/auth";
+import { upsertProfile } from "../../lib/database";
 
 export function SettingsPage() {
   const { user, setUser } = useUser();
@@ -13,20 +15,23 @@ export function SettingsPage() {
     bio: user.bio,
     techStack: user.techStack,
     leetcode: user.leetcode,
-    codechef: user.codechef,
+    gfg: user.gfg,
     github: user.github,
     website: user.website,
     linkedin: user.linkedin,
     twitter: user.twitter,
   });
   const [copied, setCopied] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const initials = form.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+    ? form.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "?";
 
   const publicUrl = form.username
     ? `codefolio.vercel.app/user/${form.username}`
@@ -38,9 +43,17 @@ export function SettingsPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSave = () => {
-    setUser({ ...user, ...form });
-    toast.success("Settings saved successfully!");
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      setUser({ ...user, ...form });
+      toast.success("Settings saved successfully!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not save settings.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const update = (key: string, val: string) => setForm({ ...form, [key]: val });
@@ -87,6 +100,7 @@ export function SettingsPage() {
               value={form.name}
               onChange={(e) => update("name", e.target.value)}
               className="w-full bg-input-background border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              placeholder="Your full name"
             />
           </div>
 
@@ -112,6 +126,7 @@ export function SettingsPage() {
               onChange={(e) => update("bio", e.target.value)}
               rows={3}
               className="w-full bg-input-background border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+              placeholder="Tell us about yourself"
             />
           </div>
 
@@ -143,17 +158,19 @@ export function SettingsPage() {
               value={form.leetcode}
               onChange={(e) => update("leetcode", e.target.value)}
               className="w-full bg-input-background border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              placeholder="your_leetcode_username"
             />
           </div>
           <div>
             <label className="text-sm text-foreground mb-1.5 flex items-center gap-2">
-              <span>👨‍🍳</span> CodeChef Username
+              <span>👨‍🍳</span>  GeeksForGeeks Username
             </label>
             <input
               type="text"
-              value={form.codechef}
-              onChange={(e) => update("codechef", e.target.value)}
+              value={form.gfg}
+              onChange={(e) => update("gfg", e.target.value)}
               className="w-full bg-input-background border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              placeholder="your_gfg_username"
             />
           </div>
           <div>
@@ -165,6 +182,7 @@ export function SettingsPage() {
               value={form.github}
               onChange={(e) => update("github", e.target.value)}
               className="w-full bg-input-background border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              placeholder="your_github_username"
             />
           </div>
         </div>
@@ -185,6 +203,7 @@ export function SettingsPage() {
               value={form.website}
               onChange={(e) => update("website", e.target.value)}
               className="w-full bg-input-background border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              placeholder="https://yourwebsite.com"
             />
           </div>
           <div>
@@ -196,6 +215,7 @@ export function SettingsPage() {
               value={form.linkedin}
               onChange={(e) => update("linkedin", e.target.value)}
               className="w-full bg-input-background border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              placeholder="https://linkedin.com/in/you"
             />
           </div>
           <div>
@@ -207,6 +227,7 @@ export function SettingsPage() {
               value={form.twitter}
               onChange={(e) => update("twitter", e.target.value)}
               className="w-full bg-input-background border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              placeholder="https://twitter.com/you"
             />
           </div>
         </div>
@@ -252,10 +273,16 @@ export function SettingsPage() {
 
       <button
         onClick={handleSave}
-        className="bg-primary text-primary-foreground px-6 py-3 rounded-xl hover:bg-primary/90 transition-all flex items-center gap-2 cursor-pointer"
+        disabled={isSaving}
+        className="bg-primary text-primary-foreground px-6 py-3 rounded-xl hover:bg-primary/90 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-70"
         style={{ fontWeight: 600 }}
       >
-        <Save className="w-4 h-4" /> Save Changes
+        {isSaving ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <Save className="w-4 h-4" />
+        )}
+        Save Changes
       </button>
     </div>
   );

@@ -1,6 +1,7 @@
 import React, { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router";
 import { Code2, Eye, EyeOff, Loader2 } from "lucide-react";
+import { signIn, signInWithGoogle, getUser } from "../../lib/auth";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -24,10 +25,30 @@ export function LoginPage() {
     }
 
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 1500));
-    setIsLoading(false);
-    navigate("/onboarding");
+    try {
+      // If session already active, just go to dashboard
+      const existing = await getUser();
+      if (existing) {
+        navigate("/dashboard");
+        return;
+      }
+      await signIn(email, password);
+      navigate("/dashboard");
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setError(err?.message || "Invalid email or password. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (err: any) {
+      console.error("Google login error:", err);
+      setError(err?.message || "Google login failed. Please try again.");
+    }
   };
 
   return (
@@ -143,7 +164,7 @@ export function LoginPage() {
           </div>
 
           <button
-            onClick={() => navigate("/onboarding")}
+            onClick={handleGoogleLogin}
             className="w-full border border-border text-foreground py-3 rounded-xl hover:bg-card transition-all flex items-center justify-center gap-3 cursor-pointer"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">

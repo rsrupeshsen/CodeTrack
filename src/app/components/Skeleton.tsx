@@ -1,3 +1,4 @@
+import React from "react";
 interface SkeletonBoxProps {
   className?: string;
   style?: React.CSSProperties;
