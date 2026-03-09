@@ -1,69 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Clock, Bell, ExternalLink, Calendar } from "lucide-react";
 import { ContestCardSkeleton } from "./Skeleton";
-
-const contests = [
-  {
-    id: 1,
-    name: "LeetCode Weekly Contest 437",
-    platform: "LeetCode",
-    url: "https://leetcode.com/contest/weekly-contest-437",
-    date: "2026-03-08T14:30:00",
-    duration: "1h 30m",
-    color: "#f59e0b",
-    registered: false,
-  },
-  {
-    id: 2,
-    name: "CodeChef Starters 182",
-    platform: "CodeChef",
-    url: "https://www.codechef.com/START182",
-    date: "2026-03-10T20:00:00",
-    duration: "2h",
-    color: "#8b5cf6",
-    registered: true,
-  },
-  {
-    id: 3,
-    name: "LeetCode Biweekly Contest 152",
-    platform: "LeetCode",
-    url: "https://leetcode.com/contest/biweekly-contest-152",
-    date: "2026-03-15T14:30:00",
-    duration: "1h 30m",
-    color: "#f59e0b",
-    registered: false,
-  },
-  {
-    id: 4,
-    name: "CodeChef Long Challenge March",
-    platform: "CodeChef",
-    url: "https://www.codechef.com/MARCH26",
-    date: "2026-03-20T15:00:00",
-    duration: "10 days",
-    color: "#8b5cf6",
-    registered: false,
-  },
-  {
-    id: 5,
-    name: "LeetCode Weekly Contest 438",
-    platform: "LeetCode",
-    url: "https://leetcode.com/contest/weekly-contest-438",
-    date: "2026-03-22T14:30:00",
-    duration: "1h 30m",
-    color: "#f59e0b",
-    registered: false,
-  },
-  {
-    id: 6,
-    name: "CodeChef Starters 183",
-    platform: "CodeChef",
-    url: "https://www.codechef.com/START183",
-    date: "2026-03-25T20:00:00",
-    duration: "2h",
-    color: "#8b5cf6",
-    registered: false,
-  },
-];
+import { getAllContests } from "../../lib/contests";
+import ContestCalendar from "./ContestCalendar";
 
 function useCountdown(targetDate: string) {
   const [timeLeft, setTimeLeft] = useState("");
@@ -88,7 +27,7 @@ function useCountdown(targetDate: string) {
   return timeLeft;
 }
 
-function ContestCard({ contest }: { contest: (typeof contests)[0] }) {
+function ContestCard({ contest }: { contest: any }) {
   const countdown = useCountdown(contest.date);
   const [registered, setRegistered] = useState(contest.registered);
   const [reminded, setReminded] = useState(false);
@@ -132,7 +71,9 @@ function ContestCard({ contest }: { contest: (typeof contests)[0] }) {
           <Calendar className="w-3.5 h-3.5" />
           {dateStr} at {timeStr}
         </div>
-        <span>Duration: {contest.duration}</span>
+        <span>
+  Duration: {Math.round(contest.duration / 3600)}h
+</span>
       </div>
 
       <div className="flex gap-2">
@@ -159,15 +100,53 @@ function ContestCard({ contest }: { contest: (typeof contests)[0] }) {
   );
 }
 
-const platformTabs = ["All", "LeetCode", "CodeChef"] as const;
+const platformTabs = [
+  "All",
+  "LeetCode",
+  "CodeChef",
+  "Codeforces",
+  "AtCoder",
+  "HackerEarth",
+  "GeeksforGeeks"
+]
 
+const platformColors = {
+  LeetCode: "#f59e0b",
+  CodeChef: "#8b5cf6",
+  Codeforces: "#3b82f6",
+  AtCoder: "#ef4444",
+  HackerEarth: "#22c55e",
+  GeeksforGeeks: "#16a34a",
+}
 export function ContestTracker() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string>("All");
-
+  const [contests, setContests] = useState<any[]>([]);
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 2000);
-    return () => clearTimeout(timer);
+    async function load() {
+      const data = await getAllContests();
+  
+      const formatted = data.map((c: any, i: number) => ({
+        id: i,
+        name: c.title,
+        platform: c.platform,
+        url: c.url,
+        date: new Date(c.start * 1000).toISOString(),
+        duration: c.duration,
+        color:
+          c.platform === "LeetCode"
+            ? "#f59e0b"
+            : c.platform === "CodeChef"
+            ? "#8b5cf6"
+            : "#3b82f6",
+        registered: false,
+      }));
+  
+      setContests(formatted);
+      setLoading(false);
+    }
+  
+    load();
   }, []);
 
   const filtered = activeTab === "All"
@@ -206,19 +185,37 @@ export function ContestTracker() {
                 : "text-muted-foreground hover:text-foreground"
             }`}
             style={{ fontWeight: activeTab === tab ? 600 : 400 }}
-          >
+            >
             {tab}
           </button>
-        ))}
-      </div>
+          ))}
+          </div>
+          
+          <div className="space-y-6">
+          
+            {/* Contest Cards */}
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {loading
+                ? Array.from({ length: 6 }, (_, i) => (
+                    <ContestCardSkeleton key={i} />
+                  ))
+                : filtered.map((c) => (
+                    <ContestCard key={c.id} contest={c} />
+                  ))}
+            </div>
+          
+            {/* Contest Calendar */}
+            {!loading && (
+  <div className="mt-14 pt-10 border-t border-border">
+    <h2 className="text-3xl text-White font-semibold mb-6 text-center">
+      Contest Calendar
+    </h2>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {loading
-          ? Array.from({ length: 6 }, (_, i) => <ContestCardSkeleton key={i} />)
-          : filtered.map((c) => (
-              <ContestCard key={c.id} contest={c} />
-            ))}
-      </div>
-    </div>
-  );
-}
+    <ContestCalendar contests={filtered} />
+  </div>
+)}
+          
+          </div>
+          </div>
+          );
+          }

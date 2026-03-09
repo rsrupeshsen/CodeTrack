@@ -68,7 +68,7 @@ export function AnalyticsPage() {
   const { user } = useUser();
   const navigate = useNavigate();
 
-  const hasData = !!(user.leetcode || user.codechef || user.github);
+  const hasData = !!(user.leetcode || user.gfg || user.github);
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 2000);
