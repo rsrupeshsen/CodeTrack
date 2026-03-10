@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { getAIHint } from "../../lib/aiHint";
 import { useUser, userStorageKey } from "./UserContext";
+import { getUserProblems, saveUserProblems, getUserSheetStatus, saveUserSheetStatus } from "../../lib/database";
 
 import blind75Data      from "../../data/blind75.json";
 import neetcode150Extra from "../../data/neetcode150extra.json";
@@ -139,12 +140,61 @@ export function QuestionTracker() {
   const [problems,    setProblems]    = useState<Problem[]>([]);
   const [sheetStatus, setSheetStatus] = useState<Record<number,"Solved"|"Attempted"|"Todo">>({});
 
+  // Load data - Database first, localStorage fallback
   useEffect(() => {
-    try { const s = localStorage.getItem(STORAGE_KEY); setProblems(s ? JSON.parse(s) : []); }
-    catch { setProblems([]); }
-    try { const ss = localStorage.getItem(SHEET_STATUS_KEY); setSheetStatus(ss ? JSON.parse(ss) : {}); }
-    catch { setSheetStatus({}); }
-  }, [STORAGE_KEY, SHEET_STATUS_KEY]);
+    if (!userId) {
+      // Anonymous user - use localStorage only
+      try { 
+        const s = localStorage.getItem(STORAGE_KEY); 
+        setProblems(s ? JSON.parse(s) : []); 
+      } catch { 
+        setProblems([]); 
+      }
+      try { 
+        const ss = localStorage.getItem(SHEET_STATUS_KEY); 
+        setSheetStatus(ss ? JSON.parse(ss) : {}); 
+      } catch { 
+        setSheetStatus({}); 
+      }
+      return;
+    }
+
+    // Logged-in user - load from Appwrite Database (source of truth)
+    const loadData = async () => {
+      try {
+        // Fetch from database
+        const [dbProblems, dbSheetStatus] = await Promise.all([
+          getUserProblems(userId),
+          getUserSheetStatus(userId)
+        ]);
+        
+        setProblems(dbProblems);
+        setSheetStatus(dbSheetStatus);
+        
+        // Update localStorage cache for offline access
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(dbProblems));
+        localStorage.setItem(SHEET_STATUS_KEY, JSON.stringify(dbSheetStatus));
+      } catch (err) {
+        console.error("Failed to load from database, using localStorage fallback:", err);
+        
+        // Fallback to localStorage if database fails
+        try { 
+          const s = localStorage.getItem(STORAGE_KEY); 
+          setProblems(s ? JSON.parse(s) : []); 
+        } catch { 
+          setProblems([]); 
+        }
+        try { 
+          const ss = localStorage.getItem(SHEET_STATUS_KEY); 
+          setSheetStatus(ss ? JSON.parse(ss) : {}); 
+        } catch { 
+          setSheetStatus({}); 
+        }
+      }
+    };
+    
+    loadData();
+  }, [userId, STORAGE_KEY, SHEET_STATUS_KEY]);
 
   const [search, setSearch]                 = useState("");
   const [filterTopic, setFilterTopic]       = useState("All");
@@ -157,8 +207,39 @@ export function QuestionTracker() {
   const [hintLoading, setHintLoading]       = useState<Record<string,boolean>>({});
   const [newProblem, setNewProblem]         = useState({ name:"", url:"", platform:"LeetCode", difficulty:"Easy", topic:"Arrays", company:"Amazon", notes:"" });
 
-  useEffect(() => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(problems)); } catch {} }, [problems]);
-  useEffect(() => { try { localStorage.setItem(SHEET_STATUS_KEY, JSON.stringify(sheetStatus)); } catch {} }, [sheetStatus]);
+  // Auto-save problems to both localStorage and database
+  useEffect(() => { 
+    try { 
+      // Always update localStorage for instant feedback
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(problems)); 
+      
+      // If logged in, also save to database (background, non-blocking)
+      if (userId) {
+        saveUserProblems(userId, problems).catch(err => 
+          console.error("Failed to sync problems to database:", err)
+        );
+      }
+    } catch (err) {
+      console.error("Failed to save problems:", err);
+    } 
+  }, [problems, userId, STORAGE_KEY]);
+
+  // Auto-save sheet status to both localStorage and database
+  useEffect(() => { 
+    try { 
+      // Always update localStorage for instant feedback
+      localStorage.setItem(SHEET_STATUS_KEY, JSON.stringify(sheetStatus)); 
+      
+      // If logged in, also save to database (background, non-blocking)
+      if (userId) {
+        saveUserSheetStatus(userId, sheetStatus).catch(err => 
+          console.error("Failed to sync sheet status to database:", err)
+        );
+      }
+    } catch (err) {
+      console.error("Failed to save sheet status:", err);
+    } 
+  }, [sheetStatus, userId, SHEET_STATUS_KEY]);
   useEffect(() => { setSearch(""); setFilterTopic("All"); setFilterDiff("All"); setFilterStatus("All"); }, [tab, activeSheet]);
 
   // ── Personal logic ────────────────────────────────────────────────────────

@@ -15,6 +15,7 @@ import { getGFGStats } from "../../lib/gfg";
 import { getGitHubData } from "../../lib/github";
 import { getContestInfo } from "../../lib/leetcodeContest";
 import { getGitHubContributions } from "../../lib/githubHeatmap";
+import { getProfileByUsername } from "../../lib/database";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -50,13 +51,16 @@ function Skeleton({ className = "" }: { className?: string }) {
 // ── Main Component ─────────────────────────────────────────────────────────────
 
 export function PublicProfilePage() {
-  const { username } = useParams();
+  const { username } = useParams(); // Username from URL: /user/:username
   const navigate = useNavigate();
-  const { user: ctxUser } = useUser();
+  const { user: ctxUser, userId: currentUserId } = useUser();
 
-  // Figure out whose profile to show — URL param or logged-in user
-  const profileUser = username ? null : ctxUser; // if /user/:username use API, else use context
+  // State for profile data
+  const [profileUser, setProfileUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // State for stats
   const [lcStats,      setLcStats]      = useState<any>(null);
   const [gfgData,      setGfgData]      = useState<any>(null);
   const [ghData,       setGhData]       = useState<any>(null);
@@ -64,42 +68,145 @@ export function PublicProfilePage() {
   const [heatmap,      setHeatmap]      = useState<{date:string;count:number}[]>([]);
   const [copied,       setCopied]       = useState(false);
 
-  // Resolve which usernames to use
-  const lcUser  = profileUser?.leetcode  || ctxUser.leetcode;
-  const gfgUser = profileUser?.gfg       || ctxUser.gfg;
-  const ghUser  = profileUser?.github    || ctxUser.github;
-  const name    = profileUser?.name      || ctxUser.name || "Developer";
-  const bio     = profileUser?.bio       || ctxUser.bio;
-  const website = profileUser?.website   || ctxUser.website;
-  const linkedin= profileUser?.linkedin  || ctxUser.linkedin;
-  const twitter = profileUser?.twitter   || ctxUser.twitter;
-  const techStack = profileUser?.techStack || ctxUser.techStack;
-  const techTags  = techStack ? techStack.split(",").map(t => t.trim()).filter(Boolean) : [];
-
-  const initials = name.split(" ").map((n:string) => n[0]).join("").toUpperCase().slice(0, 2);
-
-  const publicUrl = `${window.location.origin}/user/${ctxUser.username || "your-username"}`;
-
-  // ── Fetch all data in parallel ──────────────────────────────────────────────
+  // Load profile data based on URL or logged-in user
   useEffect(() => {
+    const loadProfile = async () => {
+      setLoading(true);
+      setError(null);
+      
+      if (username) {
+        // Public profile view - fetch from database by username
+        try {
+          const dbProfile = await getProfileByUsername(username);
+          
+          if (!dbProfile) {
+            setError("Profile not found");
+            setLoading(false);
+            return;
+          }
+          
+          setProfileUser(dbProfile);
+        } catch (err) {
+          console.error("Failed to load profile:", err);
+          setError("Failed to load profile");
+          setLoading(false);
+          return;
+        }
+      } else {
+        // Own profile view - use context user
+        if (!ctxUser.username) {
+          setError("Please complete your profile first");
+          setLoading(false);
+          return;
+        }
+        setProfileUser(ctxUser);
+      }
+      
+      setLoading(false);
+    };
+
+    loadProfile();
+  }, [username, ctxUser]);
+
+  // Get usernames from the loaded profile
+  const lcUser    = profileUser?.leetcode  || "";
+  const gfgUser   = profileUser?.gfg       || "";
+  const ghUser    = profileUser?.github    || "";
+  const name      = profileUser?.name      || "Developer";
+  const bio       = profileUser?.bio       || "";
+  const website   = profileUser?.website   || "";
+  const linkedin  = profileUser?.linkedin  || "";
+  const twitter   = profileUser?.twitter   || "";
+  const techStack = profileUser?.techStack || "";
+  const techTags  = techStack ? techStack.split(",").map((t: string) => t.trim()).filter(Boolean) : [];
+
+  const initials = name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
+
+  // Public URL - use the loaded profile's username or current user's username
+  const publicUrl = `${window.location.origin}/user/${profileUser?.username || ctxUser.username || "your-username"}`;
+
+  // Fetch stats when usernames are available
+  useEffect(() => {
+    // Only fetch if we have a profile loaded
+    if (!profileUser) return;
+
+    // Reset stats when profile changes
+    setLcStats(null);
+    setGfgData(null);
+    setGhData(null);
+    setContestData(null);
+    setHeatmap([]);
+
+    // Fetch LeetCode stats
     if (lcUser) {
-      getLeetCodeStats(lcUser).then(d => { if (d) setLcStats(d); });
-      getContestInfo(lcUser).then(d => { if (d) setContestData(d); });
+      getLeetCodeStats(lcUser).then(d => { if (d) setLcStats(d); }).catch(console.error);
+      getContestInfo(lcUser).then(d => { if (d) setContestData(d); }).catch(console.error);
     }
+    
+    // Fetch GFG stats
     if (gfgUser) {
-      getGFGStats(gfgUser).then(d => { if (d) setGfgData(d); });
+      getGFGStats(gfgUser).then(d => { if (d) setGfgData(d); }).catch(console.error);
     }
+    
+    // Fetch GitHub stats
     if (ghUser) {
-      getGitHubData(ghUser).then(d => { if (d) setGhData(d); });
-      getGitHubContributions(ghUser).then(d => { if (d?.length) setHeatmap(d); });
+      getGitHubData(ghUser).then(d => { if (d) setGhData(d); }).catch(console.error);
+      getGitHubContributions(ghUser).then(d => { if (d?.length) setHeatmap(d); }).catch(console.error);
     }
-  }, [lcUser, gfgUser, ghUser]);
+  }, [profileUser, lcUser, gfgUser, ghUser]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(publicUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if there was a problem or no profile loaded
+  if (error || !profileUser) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="text-center max-w-md mx-auto p-8">
+          <div className="bg-destructive/10 text-destructive rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <ExternalLink className="w-8 h-8" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground mb-2">
+            {error === "Profile not found" ? "Profile Not Found" : "Oops!"}
+          </h1>
+          <p className="text-muted-foreground mb-6">
+            {error || "The user you're looking for doesn't exist."}
+          </p>
+          <div className="flex gap-3 justify-center">
+            <button 
+              onClick={() => navigate("/")}
+              className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              Go Home
+            </button>
+            {error === "Please complete your profile first" && (
+              <button 
+                onClick={() => navigate("/dashboard/settings")}
+                className="px-6 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors"
+              >
+                Complete Profile
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // ── Derived stats ────────────────────────────────────────────────────────────
 
@@ -109,354 +216,210 @@ export function PublicProfilePage() {
     { name: "Easy",   value: (lcStats?.easySolved||0)+(gfgData?.easy||0),   color: "#10b981" },
     { name: "Medium", value: (lcStats?.mediumSolved||0)+(gfgData?.medium||0),color: "#f59e0b" },
     { name: "Hard",   value: (lcStats?.hardSolved||0)+(gfgData?.hard||0),   color: "#ef4444" },
-  ].filter(d => d.value > 0);
+  ];
 
-  // Build 53-week heatmap grid
-  const heatmapMap: Record<string, number> = {};
-  heatmap.forEach(d => { heatmapMap[d.date] = d.count; });
-  const today = new Date();
-  const weeks: { date: string; count: number }[][] = [];
-  const startDate = new Date(today);
-  startDate.setDate(startDate.getDate() - 364);
-  // align to Sunday
-  startDate.setDate(startDate.getDate() - startDate.getDay());
-  for (let w = 0; w < 53; w++) {
-    const week: { date: string; count: number }[] = [];
-    for (let d = 0; d < 7; d++) {
-      const date = new Date(startDate);
-      date.setDate(date.getDate() + w * 7 + d);
-      const key = date.toISOString().split("T")[0];
-      week.push({ date: key, count: heatmapMap[key] || 0 });
-    }
-    weeks.push(week);
-  }
+  const platformPie = [
+    { name: "LeetCode", value: lcStats?.totalSolved || 0,  color: "#ffa116" },
+    { name: "GFG",      value: gfgData?.totalSolved || 0,  color: "#2f8d46" },
+  ];
 
-  const tooltipStyle = {
-    backgroundColor: "#1e293b",
-    border: "1px solid rgba(148,163,184,0.15)",
-    borderRadius: "12px",
-    color: "#e5e7eb",
-  };
+  const contributions = heatmap.reduce((sum, d) => sum + d.count, 0);
+  const activeStreakData = heatmap.slice(-90);
+  const contributionTrend = [
+    { month: "M-3", count: heatmap.slice(-120, -90).reduce((s, d) => s + d.count, 0) },
+    { month: "M-2", count: heatmap.slice(-90, -60).reduce((s, d) => s + d.count, 0) },
+    { month: "M-1", count: heatmap.slice(-60, -30).reduce((s, d) => s + d.count, 0) },
+    { month: "Now", count: heatmap.slice(-30).reduce((s, d) => s + d.count, 0) },
+  ];
 
-  // ── Achievements ─────────────────────────────────────────────────────────────
+  const topLanguages = ghData?.languages?.slice(0, 5) || [];
 
-  const achievements = [
-    lcStats?.totalSolved >= 500   && { icon: "🏆", label: "Problem Master",  desc: `${lcStats.totalSolved} solved` },
-    lcStats?.contestRating >= 1600 && { icon: "⚔️", label: "LC Knight",       desc: `Rating ${lcStats.contestRating}` },
-    lcStats?.contestRating >= 1800 && { icon: "👑", label: "LC Guardian",     desc: `Rating ${lcStats.contestRating}` },
-    lcStats?.hardSolved >= 50      && { icon: "🔥", label: "Hard Crusher",    desc: `${lcStats.hardSolved} hard solved` },
-    ghData?.public_repos >= 10     && { icon: "💻", label: "GitHub Dev",      desc: `${ghData.public_repos} repos` },
-    gfgData?.totalSolved >= 100    && { icon: "📚", label: "GFG Scholar",     desc: `${gfgData.totalSolved} on GFG` },
-    contestData?.attended >= 10    && { icon: "🥊", label: "Contest Fighter", desc: `${contestData.attended} contests` },
-  ].filter(Boolean) as { icon: string; label: string; desc: string }[];
+  const stats = [
+    { icon: Code2, label: "Problems Solved", value: totalSolved, color: "#10b981" },
+    { icon: Trophy, label: "Contest Rating", value: lcStats?.contestRating || "N/A", color: "#f59e0b" },
+    { icon: Flame, label: "Contributions", value: contributions, color: "#ef4444" },
+    { icon: Target, label: "Repos", value: ghData?.repos || 0, color: "#3b82f6" },
+  ];
+
+  // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-4 py-10 space-y-8">
-
-        {/* ── Hero ── */}
-        <section className="bg-card border border-border rounded-3xl p-8 text-center relative overflow-hidden">
-          {/* Background glow */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
-
-          <div className="w-20 h-20 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-primary/30">
-            <span className="text-primary text-2xl" style={{ fontWeight: 700 }}>{initials}</span>
-          </div>
-
-          <h1 className="text-2xl text-foreground mb-1" style={{ fontWeight: 700 }}>{name}</h1>
-          {ctxUser.username && (
-            <p className="text-muted-foreground text-sm mb-3">@{ctxUser.username}</p>
-          )}
-          {bio && <p className="text-foreground/80 text-sm max-w-xl mx-auto mb-4 leading-relaxed">{bio}</p>}
-
-          {/* Tech Stack */}
-          {techTags.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-2 mb-5">
-              {techTags.map(t => (
-                <span key={t} className="bg-primary/10 border border-primary/20 text-primary px-2.5 py-0.5 rounded-full text-xs" style={{ fontWeight: 500 }}>
-                  {t}
-                </span>
-              ))}
+      {/* Hero */}
+      <div className="bg-gradient-to-br from-primary/5 via-background to-background border-b border-border">
+        <div className="max-w-6xl mx-auto px-6 py-12">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground text-3xl font-bold shrink-0">
+              {initials}
             </div>
-          )}
-
-          {/* Social links */}
-          <div className="flex justify-center gap-3 mb-5">
-            {ghUser    && <a href={`https://github.com/${ghUser}`} target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-muted rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"><Github className="w-4 h-4" /></a>}
-            {linkedin  && <a href={linkedin}  target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-muted rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"><Linkedin className="w-4 h-4" /></a>}
-            {twitter   && <a href={twitter}   target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-muted rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"><Twitter className="w-4 h-4" /></a>}
-            {website   && <a href={website}   target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-muted rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"><Globe className="w-4 h-4" /></a>}
-          </div>
-
-          {/* Shareable URL */}
-          <div className="flex items-center gap-2 max-w-sm mx-auto">
-            <div className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-xs text-muted-foreground truncate text-left">
-              {publicUrl}
-            </div>
-            <button onClick={handleCopy} className="bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-xl p-2 text-primary transition-all cursor-pointer" title="Copy link">
-              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            </button>
-            <a href={publicUrl} target="_blank" rel="noopener noreferrer" className="bg-muted hover:bg-muted/80 border border-border rounded-xl p-2 text-muted-foreground transition-all">
-              <ExternalLink className="w-4 h-4" />
-            </a>
-          </div>
-          {copied && <p className="text-primary text-xs mt-1" style={{ fontWeight: 500 }}>Copied!</p>}
-        </section>
-
-        {/* ── Summary Stats ── */}
-        <section className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {[
-            { label: "Total Solved",    value: totalSolved || "—",                     color: "#10b981", icon: Code2 },
-            { label: "LC Rating",       value: lcStats?.contestRating || "—",           color: "#3b82f6", icon: Trophy },
-            { label: "GitHub Repos",    value: ghData?.public_repos ?? "—",             color: "#8b5cf6", icon: Github },
-            { label: "Contests",        value: contestData?.attended ?? "—",            color: "#f59e0b", icon: Target },
-          ].map(s => (
-            <div key={s.label} className="bg-card border border-border rounded-2xl p-4 text-center">
-              {totalSolved === 0 && s.label === "Total Solved"
-                ? <Skeleton className="h-7 w-12 mx-auto mb-1" />
-                : <p className="text-2xl" style={{ color: s.color, fontWeight: 700 }}>{s.value}</p>
-              }
-              <p className="text-muted-foreground text-xs mt-1">{s.label}</p>
-            </div>
-          ))}
-        </section>
-
-        {/* ── Platform Cards ── */}
-        <section className="grid sm:grid-cols-3 gap-4">
-          {/* LeetCode */}
-          <div className="bg-card border border-border rounded-2xl p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-xl">🧩</span>
-              <span className="text-foreground" style={{ fontWeight: 600 }}>LeetCode</span>
-              {lcUser && <a href={`https://leetcode.com/${lcUser}`} target="_blank" rel="noopener noreferrer" className="ml-auto text-muted-foreground hover:text-primary"><ExternalLink className="w-3.5 h-3.5" /></a>}
-            </div>
-            {lcStats ? (
-              <div className="space-y-2">
-                {[
-                  { label: "Total Solved", value: lcStats.totalSolved },
-                  { label: "Easy",         value: lcStats.easySolved,   color: "#10b981" },
-                  { label: "Medium",       value: lcStats.mediumSolved, color: "#f59e0b" },
-                  { label: "Hard",         value: lcStats.hardSolved,   color: "#ef4444" },
-                  { label: "Contest Rating", value: lcStats.contestRating },
-                ].map(r => (
-                  <div key={r.label} className="flex items-center justify-between">
-                    <span className="text-muted-foreground text-sm">{r.label}</span>
-                    <span className="text-sm" style={{ fontWeight: 600, color: (r as any).color || "inherit" }}>{r.value}</span>
-                  </div>
-                ))}
-              </div>
-            ) : lcUser ? (
-              <div className="space-y-2">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-4 w-full" />)}</div>
-            ) : (
-              <p className="text-muted-foreground text-sm">Not connected</p>
-            )}
-          </div>
-
-          {/* GFG */}
-          <div className="bg-card border border-border rounded-2xl p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-xl">📗</span>
-              <span className="text-foreground" style={{ fontWeight: 600 }}>GeeksForGeeks</span>
-              {gfgUser && <a href={`https://www.geeksforgeeks.org/user/${gfgUser}`} target="_blank" rel="noopener noreferrer" className="ml-auto text-muted-foreground hover:text-primary"><ExternalLink className="w-3.5 h-3.5" /></a>}
-            </div>
-            {gfgData ? (
-              <div className="space-y-2">
-                {[
-                  { label: "Total Solved", value: gfgData.totalSolved },
-                  { label: "Coding Score", value: gfgData.totalScore },
-                  { label: "Streak",       value: `${gfgData.streak} days` },
-                  { label: "Monthly Score",value: gfgData.monthlyScore },
-                ].map(r => (
-                  <div key={r.label} className="flex items-center justify-between">
-                    <span className="text-muted-foreground text-sm">{r.label}</span>
-                    <span className="text-sm" style={{ fontWeight: 600 }}>{r.value}</span>
-                  </div>
-                ))}
-              </div>
-            ) : gfgUser ? (
-              <div className="space-y-2">{[1,2,3,4].map(i => <Skeleton key={i} className="h-4 w-full" />)}</div>
-            ) : (
-              <p className="text-muted-foreground text-sm">Not connected</p>
-            )}
-          </div>
-
-          {/* GitHub */}
-          <div className="bg-card border border-border rounded-2xl p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <Github className="w-5 h-5 text-foreground" />
-              <span className="text-foreground" style={{ fontWeight: 600 }}>GitHub</span>
-              {ghUser && <a href={`https://github.com/${ghUser}`} target="_blank" rel="noopener noreferrer" className="ml-auto text-muted-foreground hover:text-primary"><ExternalLink className="w-3.5 h-3.5" /></a>}
-            </div>
-            {ghData ? (
-              <div className="space-y-2">
-                {[
-                  { label: "Public Repos",  value: ghData.public_repos },
-                  { label: "Followers",     value: ghData.followers },
-                  { label: "Total Stars",   value: ghData.repos.reduce((s:number,r:any) => s + (r.stars||0), 0) },
-                ].map(r => (
-                  <div key={r.label} className="flex items-center justify-between">
-                    <span className="text-muted-foreground text-sm">{r.label}</span>
-                    <span className="text-sm" style={{ fontWeight: 600 }}>{r.value}</span>
-                  </div>
-                ))}
-              </div>
-            ) : ghUser ? (
-              <div className="space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-4 w-full" />)}</div>
-            ) : (
-              <p className="text-muted-foreground text-sm">Not connected</p>
-            )}
-          </div>
-        </section>
-
-        {/* ── Difficulty Pie + Contest Chart ── */}
-        {(lcStats || gfgData) && (
-          <section className="grid sm:grid-cols-2 gap-4">
-            {/* Difficulty Pie */}
-            <div className="bg-card border border-border rounded-2xl p-5">
-              <h3 className="text-foreground mb-4" style={{ fontWeight: 600 }}>Difficulty Breakdown</h3>
-              {diffPie.length > 0 ? (
-                <>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <PieChart>
-                      <Pie data={diffPie} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" strokeWidth={0}>
-                        {diffPie.map(entry => <Cell key={entry.name} fill={entry.color} />)}
-                      </Pie>
-                      <Tooltip contentStyle={tooltipStyle} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="flex justify-center gap-4 mt-2">
-                    {diffPie.map(d => (
-                      <div key={d.name} className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
-                        <span className="text-xs text-muted-foreground">{d.name} ({d.value})</span>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              ) : <Skeleton className="h-48" />}
-            </div>
-
-            {/* Contest Chart */}
-            <div className="bg-card border border-border rounded-2xl p-5">
-              <h3 className="text-foreground mb-4" style={{ fontWeight: 600 }}>Contest Rating History</h3>
-              {contestData?.history?.length > 0 ? (
-                <>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <AreaChart data={contestData.history}>
-                      <defs>
-                        <linearGradient id="cGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%"  stopColor="#f59e0b" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}   />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.1)" />
-                      <XAxis dataKey="name" hide />
-                      <YAxis stroke="#94a3b8" fontSize={11} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Area type="monotone" dataKey="rating" stroke="#f59e0b" fill="url(#cGrad)" strokeWidth={2} dot={{ r: 2, fill: "#f59e0b" }} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                  <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                    <span>Peak: <b className="text-foreground">{Math.max(...contestData.history.map((h:any)=>h.rating))}</b></span>
-                    <span>Current: <b className="text-foreground">{contestData.rating}</b></span>
-                    <span>Top <b className="text-foreground">{contestData.topPercent}%</b></span>
-                  </div>
-                </>
-              ) : lcUser ? <Skeleton className="h-48" /> : <p className="text-muted-foreground text-sm">No contest data</p>}
-            </div>
-          </section>
-        )}
-
-        {/* ── GitHub Heatmap ── */}
-        {ghUser && (
-          <section className="bg-card border border-border rounded-2xl p-5">
-            <h3 className="text-foreground mb-4" style={{ fontWeight: 600 }}>GitHub Contributions</h3>
-            {heatmap.length > 0 ? (
-              <div className="overflow-x-auto">
-                <div className="flex gap-0.5 min-w-max">
-                  {weeks.map((week, wi) => (
-                    <div key={wi} className="flex flex-col gap-0.5">
-                      {week.map((day, di) => (
-                        <HeatmapCell key={di} count={day.count} />
-                      ))}
-                    </div>
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-foreground mb-2">{name}</h1>
+              {bio && <p className="text-foreground/80 text-sm mb-3 max-w-xl mx-auto mb-4 leading-relaxed">{bio}</p>}
+              {techTags.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-2 mb-5">
+                  {techTags.map((t: string) => (
+                    <span key={t} className="bg-primary/10 border border-primary/20 text-primary px-2.5 py-0.5 rounded-full text-sm">
+                      {t}
+                    </span>
                   ))}
                 </div>
-                <div className="flex items-center gap-1 mt-3 text-xs text-muted-foreground">
-                  <span>Less</span>
-                  {[0,1,3,6,10].map(v => <HeatmapCell key={v} count={v} />)}
-                  <span>More</span>
-                  <span className="ml-auto">{heatmap.reduce((s,d)=>s+d.count,0).toLocaleString()} contributions in the last year</span>
+              )}
+              <div className="flex flex-wrap gap-3">
+                {website && (
+                  <a href={website} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                    <Globe className="w-4 h-4" /> Website
+                  </a>
+                )}
+                {ghUser && (
+                  <a href={`https://github.com/${ghUser}`} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                    <Github className="w-4 h-4" /> GitHub
+                  </a>
+                )}
+                {linkedin && (
+                  <a href={linkedin} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                    <Linkedin className="w-4 h-4" /> LinkedIn
+                  </a>
+                )}
+                {twitter && (
+                  <a href={twitter} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                    <Twitter className="w-4 h-4" /> Twitter
+                  </a>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={handleCopy}
+              className="px-4 py-2 bg-card border border-border rounded-lg hover:bg-accent transition-colors flex items-center gap-2"
+            >
+              {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+              <span className="text-sm">{copied ? "Copied!" : "Share"}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {stats.map((s, i) => (
+            <div key={i} className="bg-card border border-border rounded-2xl p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: `${s.color}20` }}>
+                  <s.icon className="w-5 h-5" style={{ color: s.color }} />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-foreground mb-1">
+                {typeof s.value === 'number' ? s.value.toLocaleString() : s.value}
+              </p>
+              <p className="text-xs text-muted-foreground">{s.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Charts Row */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          {/* Difficulty Breakdown */}
+          <div className="bg-card border border-border rounded-2xl p-6">
+            <h3 className="text-foreground font-semibold mb-5">Difficulty Breakdown</h3>
+            {totalSolved > 0 ? (
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie data={diffPie} cx="50%" cy="50%" innerRadius={55} outerRadius={80} dataKey="value" strokeWidth={0}>
+                    {diffPie.map((e, i) => <Cell key={i} fill={e.color} />)}
+                  </Pie>
+                  <Tooltip contentStyle={{ backgroundColor: "#1e293b", border: "1px solid rgba(148,163,184,0.15)", borderRadius: "10px", color: "#e5e7eb" }} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <Skeleton className="h-48" />
+            )}
+            <div className="flex justify-center gap-4 mt-4">
+              {diffPie.map((d) => (
+                <div key={d.name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color }} />
+                  <span>{d.name}: {d.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Platform Distribution */}
+          <div className="bg-card border border-border rounded-2xl p-6">
+            <h3 className="text-foreground font-semibold mb-5">Platform Distribution</h3>
+            {totalSolved > 0 ? (
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie data={platformPie} cx="50%" cy="50%" innerRadius={55} outerRadius={80} dataKey="value" strokeWidth={0}>
+                    {platformPie.map((e, i) => <Cell key={i} fill={e.color} />)}
+                  </Pie>
+                  <Tooltip contentStyle={{ backgroundColor: "#1e293b", border: "1px solid rgba(148,163,184,0.15)", borderRadius: "10px", color: "#e5e7eb" }} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <Skeleton className="h-48" />
+            )}
+            <div className="flex justify-center gap-4 mt-4">
+              {platformPie.map((p) => (
+                <div key={p.name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: p.color }} />
+                  <span>{p.name}: {p.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* GitHub Heatmap */}
+        {ghUser && (
+          <div className="bg-card border border-border rounded-2xl p-6 mb-8">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-foreground font-semibold">GitHub Activity</h3>
+              <a href={`https://github.com/${ghUser}`} target="_blank" rel="noopener noreferrer"
+                className="text-primary text-sm hover:underline flex items-center gap-1">
+                View on GitHub <ArrowRight className="w-3 h-3" />
+              </a>
+            </div>
+            {heatmap.length > 0 ? (
+              <div className="overflow-x-auto">
+                <div className="inline-grid grid-flow-col auto-cols-max gap-1">
+                  {heatmap.slice(-365).map((d, i) => (
+                    <HeatmapCell key={i} count={d.count} />
+                  ))}
                 </div>
               </div>
             ) : (
-              <Skeleton className="h-24 w-full" />
+              <Skeleton className="h-24" />
             )}
-          </section>
+          </div>
         )}
 
-        {/* ── Achievements ── */}
-        {achievements.length > 0 && (
-          <section>
-            <h3 className="text-foreground mb-4" style={{ fontWeight: 600 }}>Achievements</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {achievements.map(a => (
-                <div key={a.label} className="bg-card border border-border rounded-2xl p-4 flex flex-col items-center text-center gap-2">
-                  <span className="text-2xl">{a.icon}</span>
-                  <p className="text-foreground text-sm" style={{ fontWeight: 600 }}>{a.label}</p>
-                  <p className="text-muted-foreground text-xs">{a.desc}</p>
+        {/* Languages */}
+        {topLanguages.length > 0 && (
+          <div className="bg-card border border-border rounded-2xl p-6">
+            <h3 className="text-foreground font-semibold mb-5">Top Languages</h3>
+            <div className="space-y-3">
+              {topLanguages.map((lang: any) => (
+                <div key={lang.name}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-foreground flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: langColors[lang.name] || "#94a3b8" }} />
+                      {lang.name}
+                    </span>
+                    <span className="text-muted-foreground">{lang.percent}%</span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div className="h-2 rounded-full transition-all duration-500"
+                      style={{ width: `${lang.percent}%`, backgroundColor: langColors[lang.name] || "#94a3b8" }} />
+                  </div>
                 </div>
               ))}
             </div>
-          </section>
-        )}
-
-        {/* ── GitHub Repos ── */}
-        {ghData?.repos?.length > 0 && (
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-foreground" style={{ fontWeight: 600 }}>GitHub Repositories</h3>
-              {ghUser && (
-                <a href={`https://github.com/${ghUser}?tab=repositories`} target="_blank" rel="noopener noreferrer"
-                  className="text-primary text-xs hover:underline flex items-center gap-1">
-                  View all <ExternalLink className="w-3 h-3" />
-                </a>
-              )}
-            </div>
-            <div className="grid sm:grid-cols-2 gap-4">
-              {ghData.repos.map((r: any) => (
-                <a key={r.name} href={r.url} target="_blank" rel="noopener noreferrer"
-                  className="bg-card border border-border rounded-2xl p-5 hover:border-primary/30 transition-all group block">
-                  <h4 className="text-primary text-sm mb-1 group-hover:underline" style={{ fontWeight: 600 }}>{r.name}</h4>
-                  {r.desc && <p className="text-muted-foreground text-xs mb-3 line-clamp-2">{r.desc}</p>}
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: langColors[r.language] || "#94a3b8" }} />
-                      {r.language}
-                    </span>
-                    <span className="flex items-center gap-1"><Star className="w-3 h-3" />{r.stars}</span>
-                  </div>
-                </a>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* ── Footer CTA ── */}
-        <section className="text-center">
-          <div className="bg-gradient-to-br from-primary/10 to-teal-500/5 border border-primary/20 rounded-3xl p-10">
-            <Code2 className="w-10 h-10 text-primary mx-auto mb-4" />
-            <h2 className="text-2xl text-foreground mb-2" style={{ fontWeight: 700 }}>Create your own CodeFolio</h2>
-            <p className="text-muted-foreground mb-6">Free — track your coding journey and share your portfolio.</p>
-            <button
-              onClick={() => navigate("/signup")}
-              className="bg-primary text-primary-foreground px-8 py-3 rounded-xl hover:bg-primary/90 transition-all inline-flex items-center gap-2 cursor-pointer"
-              style={{ fontWeight: 600 }}>
-              Sign Up <ArrowRight className="w-4 h-4" />
-            </button>
           </div>
-        </section>
-
+        )}
       </div>
     </div>
   );

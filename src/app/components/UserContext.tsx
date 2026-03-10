@@ -155,6 +155,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     // Reset to empty default — next login will load fresh from Appwrite DB
     setUserState(defaultUser);
     setUserId(null);
+    // window.location.href = '/';
   };
 
   // Expose reloadUser so other components can trigger a fresh DB fetch
