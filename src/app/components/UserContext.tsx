@@ -75,7 +75,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         if (dbProfile) {
           setUserState({
             ...defaultUser,
-            name:      dbProfile.name      || appwriteUser.name  || "Developer",
+            name:      dbProfile.name      || appwriteUser.name || "Developer",
             email:     appwriteUser.email  || "",
             username:  dbProfile.username  || "",
             bio:       dbProfile.bio       || "",
@@ -87,7 +87,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             linkedin:  dbProfile.linkedin  || "",
             twitter:   dbProfile.twitter   || "",
           });
-          // Sync localStorage cache for this specific user
+          // Sync localStorage cache keyed per-user
           localStorage.setItem(userStorageKey(uid, "profile"), JSON.stringify(dbProfile));
           setHydrated(true);
           return;
@@ -104,21 +104,21 @@ export function UserProvider({ children }: { children: ReactNode }) {
           setUserState({
             ...defaultUser,
             ...parsed,
-            name:  parsed.name  || appwriteUser.name  || "Developer",
+            name:  parsed.name || appwriteUser.name || "Developer",
             email: appwriteUser.email || "",
           });
         } else {
           // 3️⃣ Brand new user — only use Appwrite account info
           setUserState({
             ...defaultUser,
-            name:  appwriteUser.name  || "Developer",
+            name:  appwriteUser.name || "Developer",
             email: appwriteUser.email || "",
           });
         }
       } catch {
         setUserState({
           ...defaultUser,
-          name:  appwriteUser.name  || "Developer",
+          name:  appwriteUser.name || "Developer",
           email: appwriteUser.email || "",
         });
       }
@@ -143,33 +143,29 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // ✅ FIX: Sign out FIRST, then clear cache, then redirect.
-  // Previously localStorage was wiped before signOut() — if signOut threw,
-  // the cache was gone but the session stayed alive, causing blank profiles.
+  // ✅ FIX: signOut FIRST, then clear cache, then hard redirect.
+  // Clears all stale React state so next login starts completely fresh.
   const logout = async () => {
     try {
       await signOut();
     } catch (err) {
       console.error("Sign out error:", err);
-      // Even if Appwrite signOut fails, still clear local state
     } finally {
-      // Clear cache only after sign-out attempt
       if (userId) {
         try {
           localStorage.removeItem(userStorageKey(userId, "profile"));
         } catch {}
       }
-      // Reset React state
       setUserState(defaultUser);
       setUserId(null);
-      // ✅ FIX: Force full page reload to /login so no stale React state lingers.
-      // DashboardLayout also calls navigate("/login") after logout(),
-      // but window.location.href guarantees a clean slate.
+      // Hard reload — wipes all React memory, guarantees clean slate for next login
       window.location.href = "/login";
     }
   };
 
-  // Expose reloadUser so other components can trigger a fresh DB fetch
+  // ✅ FIX: reloadUser is exposed so LoginPage can call it after signIn()
+  // Without this, UserContext's useEffect only runs once on mount (before login),
+  // so the profile never loads after the user signs in on the same page session.
   const reloadUser = async () => {
     await loadUser();
   };

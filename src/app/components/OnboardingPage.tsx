@@ -6,7 +6,6 @@ import { useUser } from "./UserContext";
 import { upsertProfile } from "../../lib/database";
 import { getUser } from "../../lib/auth";
 
-// ✅ Fixed: codechef → gfg to match UserContext schema
 const platforms = [
   { id: "leetcode", name: "LeetCode",      icon: "🧩", placeholder: "your_leetcode_username" },
   { id: "gfg",      name: "GeeksForGeeks", icon: "📗", placeholder: "your_gfg_username" },
@@ -18,7 +17,6 @@ export function OnboardingPage() {
   const { user, setUser } = useUser();
   const [usernames, setUsernames] = useState({ leetcode: "", gfg: "", github: "" });
   const [connected, setConnected] = useState<string[]>([]);
-  // ✅ FIX: Track saving state so we can show a spinner and prevent double-clicks
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,39 +36,33 @@ export function OnboardingPage() {
       github:   usernames.github.trim(),
     };
 
-    // ✅ FIX: Save to Appwrite DB so data persists across logouts.
+    // ✅ FIX: Save to Appwrite DB so data survives logout.
     // Previously only setUser() was called — that only writes to React state
-    // + localStorage. On logout, localStorage is cleared, so all onboarding
-    // data was permanently lost. Now we save to Appwrite first.
+    // + localStorage, which gets cleared on logout. Now we persist to Appwrite.
     try {
       const appwriteUser = await getUser();
       if (appwriteUser) {
         await upsertProfile(appwriteUser.$id, {
-          leetcode: updatedUser.leetcode,
-          gfg:      updatedUser.gfg,
-          github:   updatedUser.github,
-          // Preserve existing profile fields if already set
-          name:     user.name,
-          username: user.username,
-          bio:      user.bio,
-          techStack:user.techStack,
-          website:  user.website  || null,
-          linkedin: user.linkedin || null,
-          twitter:  user.twitter  || null,
+          name:      user.name,
+          username:  user.username,
+          bio:       user.bio,
+          techStack: user.techStack,
+          leetcode:  updatedUser.leetcode,
+          gfg:       updatedUser.gfg,
+          github:    updatedUser.github,
+          website:   user.website  || null,
+          linkedin:  user.linkedin || null,
+          twitter:   user.twitter  || null,
         });
       }
     } catch (err: any) {
       console.error("Onboarding save error:", err);
-      // Don't block the user — still update local state and navigate
-      // They can update again from Settings
-      setError("Couldn't save to cloud, but you can update in Settings.");
+      setError("Couldn't save to cloud — you can update again in Settings.");
     }
 
-    // Always update local state regardless of DB result
     setUser(updatedUser);
-
-    setTimeout(() => navigate("/dashboard"), 800);
     setIsSaving(false);
+    setTimeout(() => navigate("/dashboard"), 600);
   };
 
   return (
