@@ -8,7 +8,7 @@ import { getUser } from "../../lib/auth";
 import { upsertProfile } from "../../lib/database";
 
 export function SettingsPage() {
-  const { user, setUser } = useUser();
+  const { user, setUser, userId } = useUser();
   const [form, setForm] = useState({
     name: user.name,
     username: user.username,
@@ -34,8 +34,8 @@ export function SettingsPage() {
     : "?";
 
   const publicUrl = form.username
-    ? `codefolio.vercel.app/user/${form.username}`
-    : "codefolio.vercel.app/user/your-username";
+    ? `codefolio-v1.vercel.app/user/${form.username}`
+    : "codefolio-v1.vercel.app/user/your-username";
 
   const handleCopy = () => {
     navigator.clipboard.writeText(`https://${publicUrl}`);
@@ -46,15 +46,24 @@ export function SettingsPage() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      // 1️⃣ Get current Appwrite user ID
       const appwriteUser = await getUser();
-      if (appwriteUser) {
-        await upsertProfile(appwriteUser.$id, form); // ← saves to Appwrite DB
+      if (!appwriteUser) {
+        toast.error("Not logged in. Please log in again.");
+        return;
       }
-      setUser({ ...user, ...form }); // ← also updates localStorage
+
+      // 2️⃣ Save to Appwrite Database (persists across devices/browsers)
+      await upsertProfile(appwriteUser.$id, form);
+
+      // 3️⃣ Update local context + localStorage cache
+      setUser({ ...user, ...form });
+
       toast.success("Settings saved successfully!");
-    } catch (err) {
-      console.error(err);
-      toast.error("Could not save settings.");
+    } catch (err: any) {
+      console.error("Save error:", err);
+      // Show the actual Appwrite error message for easier debugging
+      toast.error(`Could not save settings: ${err?.message || "Unknown error"}`);
     } finally {
       setIsSaving(false);
     }
