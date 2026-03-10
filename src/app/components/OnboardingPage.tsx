@@ -1,13 +1,15 @@
 import React from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Code2, Github, ArrowRight, SkipForward, CheckCircle2 } from "lucide-react";
+import { Code2, Github, ArrowRight, SkipForward, CheckCircle2, Loader2 } from "lucide-react";
 import { useUser } from "./UserContext";
+import { upsertProfile } from "../../lib/database";
+import { getUser } from "../../lib/auth";
 
 // ✅ Fixed: codechef → gfg to match UserContext schema
 const platforms = [
-  { id: "leetcode", name: "LeetCode",     icon: "🧩",  placeholder: "your_leetcode_username" },
-  { id: "gfg",      name: "GeeksForGeeks",icon: "📗",  placeholder: "your_gfg_username" },
+  { id: "leetcode", name: "LeetCode",      icon: "🧩", placeholder: "your_leetcode_username" },
+  { id: "gfg",      name: "GeeksForGeeks", icon: "📗", placeholder: "your_gfg_username" },
   { id: "github",   name: "GitHub",        icon: null,  placeholder: "your_github_username" },
 ];
 
@@ -16,21 +18,59 @@ export function OnboardingPage() {
   const { user, setUser } = useUser();
   const [usernames, setUsernames] = useState({ leetcode: "", gfg: "", github: "" });
   const [connected, setConnected] = useState<string[]>([]);
+  // ✅ FIX: Track saving state so we can show a spinner and prevent double-clicks
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleConnect = () => {
+  const handleConnect = async () => {
+    setIsSaving(true);
+    setError(null);
+
     const newConnected = Object.entries(usernames)
       .filter(([, v]) => v.trim())
       .map(([k]) => k);
     setConnected(newConnected);
 
-    setUser({
+    const updatedUser = {
       ...user,
       leetcode: usernames.leetcode.trim(),
       gfg:      usernames.gfg.trim(),
       github:   usernames.github.trim(),
-    });
+    };
+
+    // ✅ FIX: Save to Appwrite DB so data persists across logouts.
+    // Previously only setUser() was called — that only writes to React state
+    // + localStorage. On logout, localStorage is cleared, so all onboarding
+    // data was permanently lost. Now we save to Appwrite first.
+    try {
+      const appwriteUser = await getUser();
+      if (appwriteUser) {
+        await upsertProfile(appwriteUser.$id, {
+          leetcode: updatedUser.leetcode,
+          gfg:      updatedUser.gfg,
+          github:   updatedUser.github,
+          // Preserve existing profile fields if already set
+          name:     user.name,
+          username: user.username,
+          bio:      user.bio,
+          techStack:user.techStack,
+          website:  user.website  || null,
+          linkedin: user.linkedin || null,
+          twitter:  user.twitter  || null,
+        });
+      }
+    } catch (err: any) {
+      console.error("Onboarding save error:", err);
+      // Don't block the user — still update local state and navigate
+      // They can update again from Settings
+      setError("Couldn't save to cloud, but you can update in Settings.");
+    }
+
+    // Always update local state regardless of DB result
+    setUser(updatedUser);
 
     setTimeout(() => navigate("/dashboard"), 800);
+    setIsSaving(false);
   };
 
   return (
@@ -78,13 +118,21 @@ export function OnboardingPage() {
           ))}
         </div>
 
+        {error && (
+          <p className="text-yellow-500 text-sm text-center mt-4">{error}</p>
+        )}
+
         <div className="flex flex-col sm:flex-row gap-3 mt-8">
           <button
             onClick={handleConnect}
-            className="flex-1 bg-primary text-primary-foreground py-3 rounded-xl hover:bg-primary/90 transition-all inline-flex items-center justify-center gap-2 cursor-pointer"
+            disabled={isSaving}
+            className="flex-1 bg-primary text-primary-foreground py-3 rounded-xl hover:bg-primary/90 transition-all inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
             style={{ fontWeight: 600 }}
           >
-            Connect Accounts <ArrowRight className="w-4 h-4" />
+            {isSaving
+              ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
+              : <> Connect Accounts <ArrowRight className="w-4 h-4" /></>
+            }
           </button>
           <button
             onClick={() => navigate("/dashboard")}
