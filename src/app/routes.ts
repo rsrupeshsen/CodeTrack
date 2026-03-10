@@ -13,7 +13,7 @@ import { AnalyticsPage } from "./components/AnalyticsPage";
 import { ContestTracker } from "./components/ContestTracker";
 import { QuestionTracker } from "./components/QuestionTracker";
 import { AICodingAssistant } from "./components/AICodingAssistant";
-import { PortfolioPage } from "./components/PortfolioPage";
+
 import { SettingsPage } from "./components/SettingsPage";
 import { PublicProfilePage } from "./components/PublicProfilePage";
 
@@ -50,7 +50,7 @@ export const router = createBrowserRouter([
           { path: "contests", Component: ContestTracker },
           { path: "questions", Component: QuestionTracker },
           { path: "ai", Component: AICodingAssistant },
-          { path: "profile", Component: PortfolioPage },
+          { path: "profile", Component: PublicProfilePage },
           { path: "settings", Component: SettingsPage },
         ],
       },

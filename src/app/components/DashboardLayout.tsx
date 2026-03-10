@@ -133,14 +133,17 @@ export function DashboardLayout() {
               <Bell className="w-5 h-5" />
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full" />
             </button>
-            <div className="flex items-center gap-2 cursor-pointer">
-              <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+            <button
+              onClick={() => navigate("/dashboard/profile")}
+              className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+            >
+              <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center border border-primary/30">
                 <span className="text-primary text-sm" style={{ fontWeight: 600 }}>{initials}</span>
               </div>
               <span className="hidden sm:block text-sm text-foreground" style={{ fontWeight: 500 }}>
                 {user.name}
               </span>
-            </div>
+            </button>
           </div>
         </header>
 
