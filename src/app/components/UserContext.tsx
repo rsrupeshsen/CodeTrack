@@ -60,7 +60,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
       const appwriteUser = await getUser();
 
       if (!appwriteUser) {
-        // No session — make sure we show empty state
         setUserState(defaultUser);
         setUserId(null);
         setHydrated(true);
@@ -144,18 +143,30 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // ✅ FIX: Sign out FIRST, then clear cache, then redirect.
+  // Previously localStorage was wiped before signOut() — if signOut threw,
+  // the cache was gone but the session stayed alive, causing blank profiles.
   const logout = async () => {
-    // 🔑 Clear THIS user's localStorage before signing out
-    if (userId) {
-      try {
-        localStorage.removeItem(userStorageKey(userId, "profile"));
-      } catch {}
+    try {
+      await signOut();
+    } catch (err) {
+      console.error("Sign out error:", err);
+      // Even if Appwrite signOut fails, still clear local state
+    } finally {
+      // Clear cache only after sign-out attempt
+      if (userId) {
+        try {
+          localStorage.removeItem(userStorageKey(userId, "profile"));
+        } catch {}
+      }
+      // Reset React state
+      setUserState(defaultUser);
+      setUserId(null);
+      // ✅ FIX: Force full page reload to /login so no stale React state lingers.
+      // DashboardLayout also calls navigate("/login") after logout(),
+      // but window.location.href guarantees a clean slate.
+      window.location.href = "/login";
     }
-    await signOut();
-    // Reset to empty default — next login will load fresh from Appwrite DB
-    setUserState(defaultUser);
-    setUserId(null);
-    // window.location.href = '/';
   };
 
   // Expose reloadUser so other components can trigger a fresh DB fetch
