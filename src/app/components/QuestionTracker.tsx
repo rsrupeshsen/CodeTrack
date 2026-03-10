@@ -5,6 +5,7 @@ import {
   Clock, CheckCircle2, Circle, AlertCircle, ExternalLink,
 } from "lucide-react";
 import { getAIHint } from "../../lib/aiHint";
+import { useUser, userStorageKey } from "./UserContext";
 
 import blind75Data      from "../../data/blind75.json";
 import neetcode150Extra from "../../data/neetcode150extra.json";
@@ -48,8 +49,8 @@ const COMPANIES = ["All","Amazon","Google","Meta","Microsoft","Apple","Netflix"]
 const diffColor: Record<string,string> = { Easy:"#10b981", Medium:"#f59e0b", Hard:"#ef4444" };
 const statColor: Record<string,string> = { Solved:"#10b981", Attempted:"#f59e0b", Todo:"#94a3b8" };
 
-const STORAGE_KEY      = "codefolio_problems_v3";
-const SHEET_STATUS_KEY = "codefolio_sheet_status_v2";
+const BASE_PROBLEMS_KEY    = "problems_v3";
+const BASE_SHEET_KEY       = "sheet_status_v2";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -128,24 +129,22 @@ function SheetDropdown({ active, onChange }: { active:string; onChange:(k:string
 // ── Main Component ─────────────────────────────────────────────────────────────
 
 export function QuestionTracker() {
+  const { userId } = useUser();
+  const STORAGE_KEY      = userId ? userStorageKey(userId, BASE_PROBLEMS_KEY)  : `__anon:${BASE_PROBLEMS_KEY}`;
+  const SHEET_STATUS_KEY = userId ? userStorageKey(userId, BASE_SHEET_KEY)     : `__anon:${BASE_SHEET_KEY}`;
+
   const [tab, setTab]             = useState<"personal"|"sheets">("personal");
   const [activeSheet, setActiveSheet] = useState("blind75");
 
-  const [problems, setProblems] = useState<Problem[]>(() => {
-    try {
-      const s = localStorage.getItem(STORAGE_KEY);
-      return s ? JSON.parse(s) : [
-        { id:1, name:"Two Sum", url:"https://leetcode.com/problems/two-sum/", platform:"LeetCode", difficulty:"Easy", topic:"Arrays", company:"Amazon", status:"Solved", notes:"Hash map O(n)", solvedAt:new Date(Date.now()-8*86400000).toISOString(), lastReviewed:null },
-        { id:2, name:"Binary Tree Level Order", url:"", platform:"LeetCode", difficulty:"Medium", topic:"Trees", company:"Google", status:"Solved", notes:"BFS with queue", solvedAt:new Date(Date.now()-3*86400000).toISOString(), lastReviewed:null },
-        { id:3, name:"Course Schedule", url:"https://leetcode.com/problems/course-schedule/", platform:"LeetCode", difficulty:"Medium", topic:"Graphs", company:"Meta", status:"Attempted", notes:"Topological sort - need to review", solvedAt:null, lastReviewed:null },
-        { id:4, name:"Merge K Sorted Lists", url:"", platform:"LeetCode", difficulty:"Hard", topic:"Linked Lists", company:"Amazon", status:"Solved", notes:"Priority queue approach", solvedAt:new Date(Date.now()-10*86400000).toISOString(), lastReviewed:null },
-      ];
-    } catch { return []; }
-  });
+  const [problems,    setProblems]    = useState<Problem[]>([]);
+  const [sheetStatus, setSheetStatus] = useState<Record<number,"Solved"|"Attempted"|"Todo">>({});
 
-  const [sheetStatus, setSheetStatus] = useState<Record<number,"Solved"|"Attempted"|"Todo">>(() => {
-    try { return JSON.parse(localStorage.getItem(SHEET_STATUS_KEY)||"{}"); } catch { return {}; }
-  });
+  useEffect(() => {
+    try { const s = localStorage.getItem(STORAGE_KEY); setProblems(s ? JSON.parse(s) : []); }
+    catch { setProblems([]); }
+    try { const ss = localStorage.getItem(SHEET_STATUS_KEY); setSheetStatus(ss ? JSON.parse(ss) : {}); }
+    catch { setSheetStatus({}); }
+  }, [STORAGE_KEY, SHEET_STATUS_KEY]);
 
   const [search, setSearch]                 = useState("");
   const [filterTopic, setFilterTopic]       = useState("All");

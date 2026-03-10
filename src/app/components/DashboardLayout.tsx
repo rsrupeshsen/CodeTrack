@@ -32,7 +32,12 @@ export function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
-  const { user } = useUser();
+  const { user, logout } = useUser();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
 
   const initials = user.name
     .split(" ")
@@ -73,7 +78,7 @@ export function DashboardLayout() {
 
       <div className="p-3">
         <button
-          onClick={() => navigate("/")}
+          onClick={handleLogout}
           className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-card transition-all w-full cursor-pointer"
         >
           <LogOut className="w-5 h-5" />

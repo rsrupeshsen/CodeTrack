@@ -4,16 +4,17 @@ import { useNavigate } from "react-router";
 import { Code2, Github, ArrowRight, SkipForward, CheckCircle2 } from "lucide-react";
 import { useUser } from "./UserContext";
 
+// ✅ Fixed: codechef → gfg to match UserContext schema
 const platforms = [
-  { id: "leetcode", name: "LeetCode", icon: "🧩", color: "#f59e0b", placeholder: "your_leetcode_username" },
-  { id: "codechef", name: "CodeChef", icon: "👨‍🍳", color: "#8b5cf6", placeholder: "your_codechef_username" },
-  { id: "github", name: "GitHub", icon: null, color: "#e5e7eb", placeholder: "your_github_username" },
+  { id: "leetcode", name: "LeetCode",     icon: "🧩",  placeholder: "your_leetcode_username" },
+  { id: "gfg",      name: "GeeksForGeeks",icon: "📗",  placeholder: "your_gfg_username" },
+  { id: "github",   name: "GitHub",        icon: null,  placeholder: "your_github_username" },
 ];
 
 export function OnboardingPage() {
   const navigate = useNavigate();
   const { user, setUser } = useUser();
-  const [usernames, setUsernames] = useState({ leetcode: "", codechef: "", github: "" });
+  const [usernames, setUsernames] = useState({ leetcode: "", gfg: "", github: "" });
   const [connected, setConnected] = useState<string[]>([]);
 
   const handleConnect = () => {
@@ -22,15 +23,14 @@ export function OnboardingPage() {
       .map(([k]) => k);
     setConnected(newConnected);
 
-    // ✅ Actually save usernames to UserContext (persists to localStorage)
     setUser({
       ...user,
       leetcode: usernames.leetcode.trim(),
-      codechef: usernames.codechef.trim(),
-      github: usernames.github.trim(),
+      gfg:      usernames.gfg.trim(),
+      github:   usernames.github.trim(),
     });
 
-    setTimeout(() => navigate("/dashboard"), 1000);
+    setTimeout(() => navigate("/dashboard"), 800);
   };
 
   return (
@@ -47,7 +47,7 @@ export function OnboardingPage() {
             Connect Your Coding Profiles
           </h1>
           <p className="text-muted-foreground">
-            Link your accounts to aggregate your coding statistics
+            Link your accounts to start tracking your progress
           </p>
         </div>
 
@@ -58,14 +58,11 @@ export function OnboardingPage() {
               className="bg-card border border-border rounded-2xl p-5 transition-all hover:border-primary/30"
             >
               <div className="flex items-center gap-3 mb-3">
-                {p.icon ? (
-                  <span className="text-2xl">{p.icon}</span>
-                ) : (
-                  <Github className="w-6 h-6 text-foreground" />
-                )}
-                <span className="text-foreground" style={{ fontWeight: 600 }}>
-                  {p.name}
-                </span>
+                {p.icon
+                  ? <span className="text-2xl">{p.icon}</span>
+                  : <Github className="w-6 h-6 text-foreground" />
+                }
+                <span className="text-foreground" style={{ fontWeight: 600 }}>{p.name}</span>
                 {connected.includes(p.id) && (
                   <CheckCircle2 className="w-5 h-5 text-primary ml-auto" />
                 )}
@@ -73,9 +70,7 @@ export function OnboardingPage() {
               <input
                 type="text"
                 value={usernames[p.id as keyof typeof usernames]}
-                onChange={(e) =>
-                  setUsernames({ ...usernames, [p.id]: e.target.value })
-                }
+                onChange={(e) => setUsernames({ ...usernames, [p.id]: e.target.value })}
                 className="w-full bg-input-background border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder={p.placeholder}
               />
