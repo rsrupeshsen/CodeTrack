@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { getUser, signOut } from "../../lib/auth";
+import { getProfileByUserId } from "../../lib/database";
 
 export interface UserData {
   name: string;
@@ -18,7 +19,7 @@ export interface UserData {
 interface UserContextType {
   user: UserData;
   setUser: (user: UserData) => void;
-  userId: string | null;       // Appwrite $id — used to scope localStorage keys
+  userId: string | null;
   logout: () => Promise<void>;
 }
 
@@ -43,66 +44,97 @@ const UserContext = createContext<UserContextType>({
   logout: async () => {},
 });
 
-// ── Key helpers ────────────────────────────────────────────────────────────────
-// All localStorage keys are scoped by Appwrite user ID so different users
-// on the same browser never share data.
-
 export function userStorageKey(userId: string, key: string) {
   return `codefolio:${userId}:${key}`;
 }
-
-// ── Provider ───────────────────────────────────────────────────────────────────
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [userId,   setUserId]   = useState<string | null>(null);
   const [user,     setUserState] = useState<UserData>(defaultUser);
   const [hydrated, setHydrated]  = useState(false);
 
-  // On mount: get Appwrite session, derive the user-scoped key, load saved profile
   useEffect(() => {
-    getUser().then(appwriteUser => {
-      if (!appwriteUser) {
-        setHydrated(true);
-        return;
-      }
-
-      const uid = appwriteUser.$id;
-      setUserId(uid);
-
-      // Load this specific user's profile from localStorage
+    const loadUser = async () => {
       try {
-        const saved = localStorage.getItem(userStorageKey(uid, "profile"));
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          // Always use Appwrite's name/email as source of truth
-          setUserState({
-            ...defaultUser,
-            ...parsed,
-            name:  parsed.name  || appwriteUser.name  || "Developer",
-            email: appwriteUser.email || "",
-          });
-        } else {
-          // First login for this user — seed from Appwrite account
+        const appwriteUser = await getUser();
+        if (!appwriteUser) {
+          setHydrated(true);
+          return;
+        }
+
+        const uid = appwriteUser.$id;
+        setUserId(uid);
+
+        // 1️⃣ Try Appwrite DB first (persistent across devices/browsers)
+        try {
+          const dbProfile = await getProfileByUserId(uid);
+          if (dbProfile) {
+            setUserState({
+              ...defaultUser,
+              name:      dbProfile.name      || appwriteUser.name  || "Developer",
+              email:     appwriteUser.email  || "",
+              username:  dbProfile.username  || "",
+              bio:       dbProfile.bio       || "",
+              techStack: dbProfile.techStack || "",
+              leetcode:  dbProfile.leetcode  || "",
+              gfg:       dbProfile.gfg       || "",
+              github:    dbProfile.github    || "",
+              website:   dbProfile.website   || "",
+              linkedin:  dbProfile.linkedin  || "",
+              twitter:   dbProfile.twitter   || "",
+            });
+            // Keep localStorage in sync
+            localStorage.setItem(
+              userStorageKey(uid, "profile"),
+              JSON.stringify(dbProfile)
+            );
+            setHydrated(true);
+            return;
+          }
+        } catch (dbErr) {
+          console.warn("Appwrite DB fetch failed, falling back to localStorage:", dbErr);
+        }
+
+        // 2️⃣ Fall back to localStorage (for existing users before this fix)
+        try {
+          const saved = localStorage.getItem(userStorageKey(uid, "profile"));
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            setUserState({
+              ...defaultUser,
+              ...parsed,
+              name:  parsed.name  || appwriteUser.name  || "Developer",
+              email: appwriteUser.email || "",
+            });
+          } else {
+            // 3️⃣ Brand new user — seed from Appwrite account only
+            setUserState({
+              ...defaultUser,
+              name:  appwriteUser.name  || "Developer",
+              email: appwriteUser.email || "",
+            });
+          }
+        } catch {
           setUserState({
             ...defaultUser,
             name:  appwriteUser.name  || "Developer",
             email: appwriteUser.email || "",
           });
         }
-      } catch {
-        setUserState({
-          ...defaultUser,
-          name:  appwriteUser.name  || "Developer",
-          email: appwriteUser.email || "",
-        });
-      }
 
-      setHydrated(true);
-    });
+      } catch (err) {
+        console.error("Failed to load user:", err);
+      } finally {
+        setHydrated(true);
+      }
+    };
+
+    loadUser();
   }, []);
 
   const setUser = (newUser: UserData) => {
     setUserState(newUser);
+    // Always keep localStorage in sync as a cache
     if (userId) {
       try {
         localStorage.setItem(userStorageKey(userId, "profile"), JSON.stringify(newUser));
@@ -112,14 +144,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await signOut();
-    // Clear in-memory state but do NOT delete localStorage — user data stays
-    // so it's ready when they log back in
     setUserState(defaultUser);
     setUserId(null);
   };
 
-  // Don't render children until we've attempted to load from storage
-  // (prevents flash of empty/wrong data)
   if (!hydrated) return null;
 
   return (

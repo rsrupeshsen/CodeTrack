@@ -46,7 +46,11 @@ export function SettingsPage() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      setUser({ ...user, ...form });
+      const appwriteUser = await getUser();
+      if (appwriteUser) {
+        await upsertProfile(appwriteUser.$id, form); // ← saves to Appwrite DB
+      }
+      setUser({ ...user, ...form }); // ← also updates localStorage
       toast.success("Settings saved successfully!");
     } catch (err) {
       console.error(err);
