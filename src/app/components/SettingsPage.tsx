@@ -46,29 +46,22 @@ export function SettingsPage() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // 1️⃣ Get current Appwrite user ID
       const appwriteUser = await getUser();
       if (!appwriteUser) {
         toast.error("Not logged in. Please log in again.");
         return;
       }
-
-      // 2️⃣ Save to Appwrite Database (persists across devices/browsers)
+  
       await upsertProfile(appwriteUser.$id, form);
-
-      // 3️⃣ Update local context + localStorage cache
       setUser({ ...user, ...form });
-
       toast.success("Settings saved successfully!");
     } catch (err: any) {
       console.error("Save error:", err);
-      // Show the actual Appwrite error message for easier debugging
       toast.error(`Could not save settings: ${err?.message || "Unknown error"}`);
     } finally {
       setIsSaving(false);
     }
   };
-
   const update = (key: string, val: string) => setForm({ ...form, [key]: val });
 
   return (
