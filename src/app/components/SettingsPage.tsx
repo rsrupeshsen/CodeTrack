@@ -52,7 +52,15 @@ export function SettingsPage() {
         return;
       }
   
-      await upsertProfile(appwriteUser.$id, form);
+      // Strip empty URL fields so Appwrite doesn't reject them
+      const cleanForm = {
+        ...form,
+        website:  form.website  || null,
+        linkedin: form.linkedin || null,
+        twitter:  form.twitter  || null,
+      };
+  
+      await upsertProfile(appwriteUser.$id, cleanForm);
       setUser({ ...user, ...form });
       toast.success("Settings saved successfully!");
     } catch (err: any) {
