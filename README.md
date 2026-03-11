@@ -28,15 +28,19 @@ CodeFolio is a unified developer dashboard that aggregates your coding activity 
 ## ✨ Features
 
 ### 📊 Unified Dashboard
+
 Aggregate your stats from LeetCode, GFG, and GitHub at a glance. View problems solved, contest ratings, GitHub contributions, and monthly activity charts — all from a single home screen.
 
 ### 📈 Deep Analytics
+
 Explore detailed breakdowns of your coding performance including difficulty distribution (Easy / Medium / Hard), platform comparisons, and trend charts over time powered by Recharts.
 
 ### 🏆 Contest Tracker
+
 Never miss an upcoming coding contest. Browse and filter contests from LeetCode, CodeChef, Codeforces, and more through a full calendar view and an interactive contest list.
 
 ### 📋 Question Tracker
+
 Track your progress on curated problem sheets including:
 - **Blind 75** — 75 must-do LeetCode problems
 - **NeetCode 150** — 150 curated problems
@@ -46,12 +50,15 @@ Track your progress on curated problem sheets including:
 Add your own custom problems, set status (Solved / Attempted / Todo), write notes, and get AI-powered hints for any problem.
 
 ### 🤖 AI Coding Assistant
+
 Chat with a built-in AI assistant (powered by Claude) that knows your stats. Generate a personalised daily study plan, get topic recommendations, find hard problems to try, or ask for advice on improving your contest rating.
 
 ### 🌐 Public Portfolio
+
 Every user gets a shareable public profile at `/user/<username>` showcasing their coding journey, GitHub projects, achievements, and stats — perfect for recruiters and peers.
 
 ### 🔥 GitHub Heatmap
+
 Visualise your GitHub contribution heatmap directly in the dashboard, showing consistency and coding streaks.
 
 ### 🎖️ Badges & Achievements
@@ -61,18 +68,18 @@ Unlock and display badges based on milestones like solving 1000 problems, mainta
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Framework | React 19 + TypeScript |
-| Build Tool | Vite 6 |
-| Styling | Tailwind CSS v4 |
-| UI Components | shadcn/ui + Radix UI |
-| Charts | Recharts |
-| Animations | Motion (Framer Motion v12) |
-| Routing | React Router v7 |
-| Backend / Auth | Appwrite |
-| Database | Appwrite Databases |
-| Deployment | Vercel |
+| Layer          | Technology                 |
+| -------------- | -------------------------- |
+| Framework      | React 19 + TypeScript      |
+| Build Tool     | Vite 6                     |
+| Styling        | Tailwind CSS v4            |
+| UI Components  | shadcn/ui + Radix UI       |
+| Charts         | Recharts                   |
+| Animations     | Motion (Framer Motion v12) |
+| Routing        | React Router v7            |
+| Backend / Auth | Appwrite                   |
+| Database       | Appwrite Databases         |
+| Deployment     | Vercel                     |
 
 ---
 
@@ -176,6 +183,7 @@ After signing up, go to **Settings** to connect your handles:
 - **Social links** — LinkedIn, Twitter, personal website
 
 Your public profile will be live at:
+
 ```
 https://codefolio-v1.vercel.app/user/<your-username>
 ```
