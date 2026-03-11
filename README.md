@@ -1,111 +1,177 @@
+```
+ ██████╗ ██████╗ ██████╗ ███████╗███████╗ ██████╗ ██╗     ██╗ ██████╗
+██╔════╝██╔═══██╗██╔══██╗██╔════╝██╔════╝██╔═══██╗██║     ██║██╔═══██╗
+██║     ██║   ██║██║  ██║█████╗  █████╗  ██║   ██║██║     ██║██║   ██║
+██║     ██║   ██║██║  ██║██╔══╝  ██╔══╝  ██║   ██║██║     ██║██║   ██║
+╚██████╗╚██████╔╝██████╔╝███████╗██║     ╚██████╔╝███████╗██║╚██████╔╝
+ ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝      ╚═════╝ ╚══════╝╚═╝ ╚═════╝
+```
+
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/your-username/CodeTrack/main/codefolio.png" alt="CodeFolio Logo" width="80" />
+### ─────────── _Your Entire Coding Journey. One Dashboard._ ───────────
 
-# CodeFolio
+<br/>
 
-**Track your entire coding journey in one place.**
+[![⚡ Live](https://img.shields.io/badge/⚡_LIVE_DEMO-codefolio--v1.vercel.app-000000?style=for-the-badge&labelColor=6366f1)](https://codefolio-v1.vercel.app)&nbsp;&nbsp;
+[![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev)&nbsp;&nbsp;
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://typescriptlang.org)&nbsp;&nbsp;
+[![License](https://img.shields.io/badge/MIT-License-22c55e?style=for-the-badge)](./LICENSE)
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-codefolio--v1.vercel.app-6366f1?style=for-the-badge&logo=vercel)](https://codefolio-v1.vercel.app)
-[![React](https://img.shields.io/badge/React-19-61dafb?style=flat-square&logo=react)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
-[![Vite](https://img.shields.io/badge/Vite-6-646cff?style=flat-square&logo=vite)](https://vitejs.dev)
-[![TailwindCSS](https://img.shields.io/badge/Tailwind-4-38bdf8?style=flat-square&logo=tailwindcss)](https://tailwindcss.com)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](./LICENSE)
+<br/>
+
+```
+  LeetCode  ──┐
+              ├──▶  CodeFolio  ──▶  Unified Analytics
+  GFG       ──┤                     Contest Tracker
+              └──▶  AI Engine  ──▶  Smart Study Plans
+  GitHub    ──┘                     Public Portfolio
+```
 
 </div>
 
----
-
-## What is CodeFolio?
-
-CodeFolio is a unified developer dashboard that aggregates your coding activity from **LeetCode**, **GeeksForGeeks**, and **GitHub** into a single, beautiful interface. It provides in-depth analytics, contest tracking, an AI-powered coding assistant, a question tracker with curated problem sheets, and a shareable public portfolio — all in one place.
-
-> **Live Demo →** [https://codefolio-v1.vercel.app](https://codefolio-v1.vercel.app)
+<br/>
 
 ---
 
-## ✨ Features
+## `> whoami`
 
-### 📊 Unified Dashboard
+**CodeFolio** is the coding tracker you always wished existed.
 
-Aggregate your stats from LeetCode, GFG, and GitHub at a glance. View problems solved, contest ratings, GitHub contributions, and monthly activity charts — all from a single home screen.
+Stop tab-switching between LeetCode, GeeksForGeeks, and GitHub to piece together your progress. CodeFolio pulls everything into one sleek dashboard — your stats, your streaks, your contests, your portfolio — and layers on an AI assistant that actually knows your strengths and gaps.
 
-### 📈 Deep Analytics
+> 🔗 **[https://codefolio-v1.vercel.app](https://codefolio-v1.vercel.app)**
 
-Explore detailed breakdowns of your coding performance including difficulty distribution (Easy / Medium / Hard), platform comparisons, and trend charts over time powered by Recharts.
-
-### 🏆 Contest Tracker
-
-Never miss an upcoming coding contest. Browse and filter contests from LeetCode, CodeChef, Codeforces, and more through a full calendar view and an interactive contest list.
-
-### 📋 Question Tracker
-
-Track your progress on curated problem sheets including:
-- **Blind 75** — 75 must-do LeetCode problems
-- **NeetCode 150** — 150 curated problems
-- **Striver SDE Sheet** — 191 SDE interview problems
-- **Company-specific sheets** — Amazon, Google, Meta, Microsoft, Apple
-
-Add your own custom problems, set status (Solved / Attempted / Todo), write notes, and get AI-powered hints for any problem.
-
-### 🤖 AI Coding Assistant
-
-Chat with a built-in AI assistant (powered by Claude) that knows your stats. Generate a personalised daily study plan, get topic recommendations, find hard problems to try, or ask for advice on improving your contest rating.
-
-### 🌐 Public Portfolio
-
-Every user gets a shareable public profile at `/user/<username>` showcasing their coding journey, GitHub projects, achievements, and stats — perfect for recruiters and peers.
-
-### 🔥 GitHub Heatmap
-
-Visualise your GitHub contribution heatmap directly in the dashboard, showing consistency and coding streaks.
-
-### 🎖️ Badges & Achievements
-Unlock and display badges based on milestones like solving 1000 problems, maintaining streaks, and reaching contest rating thresholds.
+<br/>
 
 ---
 
-## 🛠️ Tech Stack
+## `> ls features/`
 
-| Layer          | Technology                 |
-| -------------- | -------------------------- |
-| Framework      | React 19 + TypeScript      |
-| Build Tool     | Vite 6                     |
-| Styling        | Tailwind CSS v4            |
-| UI Components  | shadcn/ui + Radix UI       |
-| Charts         | Recharts                   |
-| Animations     | Motion (Framer Motion v12) |
-| Routing        | React Router v7            |
-| Backend / Auth | Appwrite                   |
-| Database       | Appwrite Databases         |
-| Deployment     | Vercel                     |
+<br/>
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### `📊` &nbsp;Unified Dashboard
+
+Real-time stats from LeetCode, GFG, and GitHub on a single screen. Problems solved, contest ratings, contribution heatmaps, and monthly activity — no more tab-switching.
+
+</td>
+<td width="50%" valign="top">
+
+### `📈` &nbsp;Deep Analytics
+
+Difficulty breakdowns, platform comparisons, and trend charts built on Recharts. See where you're strong and where you're bleeding rating points.
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### `🏆` &nbsp;Contest Tracker
+
+Full calendar view for upcoming contests on LeetCode, CodeChef, Codeforces and more. Never lose track of a round again.
+
+</td>
+<td width="50%" valign="top">
+
+### `🤖` &nbsp;AI Coding Assistant
+
+An AI chat assistant (powered by Claude) that reads your actual stats. Ask it for a study plan, topic recs, or hard problems to crack — it answers with _your_ data in context.
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### `📋` &nbsp;Question Tracker
+
+Track progress across 8 curated sheets. Add custom problems, set status, write notes, and request AI-generated hints for any problem you're stuck on.
+
+```
+Blind 75  •  NeetCode 150  •  Striver SDE
+Amazon  •  Google  •  Meta  •  Microsoft  •  Apple
+```
+
+</td>
+<td width="50%" valign="top">
+
+### `🌐` &nbsp;Public Portfolio
+
+Every user gets a shareable dev portfolio at `/user/<username>` — live GitHub repos, achievements, problem stats, and social links. Share it with recruiters or pin it on your resume.
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### `🔥` &nbsp;GitHub Heatmap
+
+Your contribution graph rendered directly in the dashboard. Build the streak. Keep it green.
+
+</td>
+<td width="50%" valign="top">
+
+### `🎖️` &nbsp;Badges & Achievements
+
+Unlock milestone badges — 1000 problems, 90-day streak, contest rating tiers. Display them on your portfolio.
+
+</td>
+</tr>
+</table>
+
+<br/>
 
 ---
 
-## 🚀 Getting Started
+## `> cat stack.json`
+
+```json
+{
+  "frontend": "React 19 + TypeScript 5.9",
+  "build": "Vite 6",
+  "styling": "Tailwind CSS v4",
+  "ui": "shadcn/ui + Radix UI primitives",
+  "charts": "Recharts 2",
+  "animation": "Motion (Framer Motion v12)",
+  "routing": "React Router v7",
+  "auth": "Appwrite",
+  "database": "Appwrite Databases",
+  "deployment": "Vercel"
+}
+```
+
+<br/>
+
+---
+
+## `> ./setup.sh`
 
 ### Prerequisites
 
-- **Node.js** 18+ and **npm** installed
+- Node.js `18+`
 - An [Appwrite](https://appwrite.io) project (cloud or self-hosted)
 
-### 1. Clone the repository
+<br/>
+
+**Step 1 — Clone**
 
 ```bash
-git clone https://github.com/your-username/CodeTrack.git
+git clone https://github.com/rsrupeshsen/CodeTrack.git
 cd CodeTrack
 ```
 
-### 2. Install dependencies
+**Step 2 — Install**
 
 ```bash
 npm install
 ```
 
-### 3. Configure environment variables
+**Step 3 — Configure**
 
-Create a `.env` file in the project root:
+Create a `.env` in the project root:
 
 ```env
 VITE_APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
@@ -113,116 +179,141 @@ VITE_APPWRITE_PROJECT_ID=your_project_id
 VITE_APPWRITE_DB_ID=your_database_id
 ```
 
-> **Note:** You will also need to set up the Appwrite database with the `profiles`, `questions`, and `cached_stats` collections. Refer to `src/lib/appwrite.ts` for collection IDs.
+> Set up your Appwrite database with three collections: `profiles`, `questions`, and `cached_stats`. See `src/lib/appwrite.ts` for the full schema reference.
 
-### 4. Start the development server
+**Step 4 — Run**
 
 ```bash
 npm run dev
+# → http://localhost:5173
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
-
-### 5. Build for production
+**Step 5 — Build**
 
 ```bash
 npm run build
 ```
 
+<br/>
+
 ---
 
-## 📁 Project Structure
+## `> tree src/`
 
 ```
 src/
 ├── app/
 │   ├── components/
-│   │   ├── ui/                  # shadcn/ui base components
-│   │   ├── DashboardHome.tsx    # Main dashboard overview
-│   │   ├── AnalyticsPage.tsx    # Deep analytics & charts
-│   │   ├── ContestTracker.tsx   # Contest list & calendar
-│   │   ├── QuestionTracker.tsx  # Problem sheets & tracker
-│   │   ├── AICodingAssistant.tsx# AI chat assistant
-│   │   ├── PortfolioPage.tsx    # Public portfolio view
-│   │   ├── SettingsPage.tsx     # Profile & platform settings
-│   │   ├── LandingPage.tsx      # Marketing landing page
-│   │   └── ...                  # Auth, layout, onboarding
-│   ├── App.tsx
+│   │   ├── ui/                    ← shadcn/ui base components
+│   │   ├── DashboardHome.tsx      ← stats overview + platform modals
+│   │   ├── AnalyticsPage.tsx      ← charts & deep performance data
+│   │   ├── ContestTracker.tsx     ← contest list + calendar view
+│   │   ├── QuestionTracker.tsx    ← problem sheets, notes, hints
+│   │   ├── AICodingAssistant.tsx  ← Claude-powered AI chat
+│   │   ├── PortfolioPage.tsx      ← public shareable profile
+│   │   ├── SettingsPage.tsx       ← handle & social link config
+│   │   ├── LandingPage.tsx        ← marketing landing page
+│   │   └── ...                    ← auth flows, layouts, onboarding
 │   └── routes.ts
+│
 ├── data/
-│   ├── blind75.json             # Blind 75 problems
-│   ├── neetcode150extra.json    # NeetCode 150 extras
-│   ├── striverSDE.json          # Striver SDE sheet
-│   └── company.json             # Company-specific problems
+│   ├── blind75.json               ← 75 must-do problems
+│   ├── neetcode150extra.json      ← NeetCode 150 extras
+│   ├── striverSDE.json            ← 191 SDE interview problems
+│   └── company.json               ← FAANG company problems
+│
 ├── lib/
-│   ├── leetcode.ts              # LeetCode API integration
-│   ├── gfg.ts                   # GeeksForGeeks integration
-│   ├── github.ts                # GitHub API integration
-│   ├── githubHeatmap.ts         # GitHub contribution heatmap
-│   ├── contests.ts              # Contest aggregation
-│   ├── aiHint.ts                # AI hint generation
-│   ├── aiInsights.ts            # AI insights engine
-│   ├── auth.ts                  # Appwrite auth helpers
-│   ├── database.ts              # Appwrite DB helpers
-│   └── appwrite.ts              # Appwrite client config
+│   ├── leetcode.ts                ← LeetCode API
+│   ├── gfg.ts                     ← GFG API
+│   ├── github.ts                  ← GitHub API
+│   ├── githubHeatmap.ts           ← contribution heatmap
+│   ├── contests.ts                ← contest aggregation
+│   ├── aiHint.ts                  ← per-problem AI hints
+│   ├── aiInsights.ts              ← personalised AI insights
+│   ├── auth.ts                    ← Appwrite auth helpers
+│   ├── database.ts                ← Appwrite DB helpers
+│   └── appwrite.ts                ← Appwrite client
+│
 └── styles/
-    └── ...                      # Global styles & theming
+    └── theme.css / fonts.css / ...
 ```
+
+<br/>
 
 ---
 
-## ⚙️ Configuration
+## `> configure --profiles`
 
-### Connecting your coding profiles
+After signing up, head to **Settings** and connect your handles:
 
-After signing up, go to **Settings** to connect your handles:
+| Platform                       | What it unlocks                                         |
+| ------------------------------ | ------------------------------------------------------- |
+| `leetcode: "<handle>"`         | Problems solved · Contest rating · Difficulty breakdown |
+| `gfg: "<handle>"`              | GFG problem stats · Score                               |
+| `github: "<handle>"`           | Repos · Contribution heatmap · Stars                    |
+| `linkedin / twitter / website` | Shown on your public portfolio                          |
 
-- **LeetCode username** — fetches problem stats and contest rating
-- **GeeksForGeeks username** — fetches GFG problem stats
-- **GitHub username** — fetches repositories and contribution heatmap
-- **Social links** — LinkedIn, Twitter, personal website
-
-Your public profile will be live at:
+Your live public profile:
 
 ```
 https://codefolio-v1.vercel.app/user/<your-username>
 ```
 
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a new branch (`git checkout -b feature/my-feature`)
-3. Commit your changes (`git commit -m 'Add my feature'`)
-4. Push to the branch (`git push origin feature/my-feature`)
-5. Open a Pull Request
-
-Please read the [Guidelines](./guidelines/Guidelines.md) before contributing.
+<br/>
 
 ---
 
-## 📜 Attributions
+## `> git contribute`
 
-- UI components from [shadcn/ui](https://ui.shadcn.com/) — MIT License
-- Photos from [Unsplash](https://unsplash.com) — Unsplash License
+Pull requests are welcome. Here's the flow:
 
-See [ATTRIBUTIONS.md](./ATTRIBUTIONS.md) for full details.
+```bash
+# 1. Fork → clone your fork
+git clone https://github.com/<you>/CodeTrack.git
+
+# 2. Branch
+git checkout -b feat/your-feature-name
+
+# 3. Commit with intention
+git commit -m "feat: add streak freeze badge logic"
+
+# 4. Push & open a PR
+git push origin feat/your-feature-name
+```
+
+Please read [Guidelines.md](./guidelines/Guidelines.md) before submitting.
+
+<br/>
 
 ---
 
-## 📄 License
+## `> cat NOTICE`
 
-This project is licensed under the [MIT License](./LICENSE).
+```
+shadcn/ui components  —  MIT License   (https://ui.shadcn.com)
+Unsplash photos       —  Unsplash License (https://unsplash.com/license)
+```
+
+Full credits in [ATTRIBUTIONS.md](./ATTRIBUTIONS.md)
+
+<br/>
+
+---
+
+## `> cat LICENSE`
+
+MIT — free to use, modify, and distribute. See [LICENSE](./LICENSE).
+
+<br/>
 
 ---
 
 <div align="center">
 
-Made with ❤️ for competitive programmers and developers
+```
+built for coders  ·  by a coder
+```
 
-[🌐 Live Demo](https://codefolio-v1.vercel.app) · [🐛 Report Bug](https://github.com/rsrupeshsen/CodeTrack/issues) · [✨ Request Feature](https://github.com/rsrupeshsen/CodeTrack/issues)
+**[🌐 Live Demo](https://codefolio-v1.vercel.app)** &nbsp;·&nbsp; **[🐛 Issues](https://github.com/rsrupeshsen/CodeTrack/issues)** &nbsp;·&nbsp; **[⭐ Star this repo](https://github.com/rsrupeshsen/CodeTrack)**
 
 </div>
