@@ -1,6 +1,5 @@
-import React from "react";
-import { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router";
+import { useState, useEffect, useRef } from "react";
+import { NavLink, Outlet, useNavigate, useLocation } from "react-router";
 import {
   LayoutDashboard,
   BarChart3,
@@ -32,7 +31,61 @@ export function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useUser();
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // Close sidebar when route changes
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
+  // Close sidebar when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target as Node)
+      ) {
+        // Check if click is not on the menu button
+        const menuButton = document.querySelector("[data-mobile-menu-button]");
+        if (menuButton && menuButton.contains(event.target as Node)) {
+          return; // Don't close if clicking the menu button
+        }
+        setSidebarOpen(false);
+      }
+    };
+
+    if (sidebarOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      // Prevent body scroll when sidebar is open
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.body.style.overflow = "unset";
+    };
+  }, [sidebarOpen]);
+
+  // Close sidebar when pressing Escape key
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSidebarOpen(false);
+      }
+    };
+
+    if (sidebarOpen) {
+      document.addEventListener("keydown", handleEscape);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [sidebarOpen]);
 
   const handleLogout = async () => {
     await logout();
@@ -95,14 +148,24 @@ export function DashboardLayout() {
         <SidebarContent />
       </aside>
 
-      {/* Mobile Sidebar Overlay */}
+      {/* Mobile Sidebar */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
-          <aside className="relative w-64 h-full bg-sidebar border-r border-border flex flex-col">
+          {/* Overlay */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+            onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
+          />
+          {/* Sidebar */}
+          <aside
+            ref={sidebarRef}
+            className="relative w-64 h-full bg-sidebar border-r border-border flex flex-col animate-in slide-in-from-left duration-200"
+          >
             <button
-              className="absolute right-3 top-5 text-muted-foreground cursor-pointer"
+              className="absolute right-3 top-5 text-muted-foreground hover:text-foreground cursor-pointer p-1 hover:bg-accent rounded-lg transition-colors"
               onClick={() => setSidebarOpen(false)}
+              aria-label="Close sidebar"
             >
               <X className="w-5 h-5" />
             </button>
@@ -117,8 +180,11 @@ export function DashboardLayout() {
         <header className="h-16 border-b border-border flex items-center justify-between px-4 lg:px-6 bg-background shrink-0">
           <div className="flex items-center gap-3">
             <button
-              className="lg:hidden text-foreground cursor-pointer"
+              data-mobile-menu-button
+              className="lg:hidden text-foreground cursor-pointer p-2 hover:bg-accent rounded-lg transition-colors active:scale-95"
               onClick={() => setSidebarOpen(true)}
+              aria-label="Open sidebar"
+              aria-expanded={sidebarOpen}
             >
               <Menu className="w-6 h-6" />
             </button>
@@ -134,18 +200,26 @@ export function DashboardLayout() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <button className="relative text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+            <button className="relative text-muted-foreground hover:text-foreground transition-colors cursor-pointer p-2 hover:bg-accent rounded-lg">
               <Bell className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full" />
             </button>
             <button
               onClick={() => navigate("/dashboard/profile")}
-              className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+              className="flex items-center gap-2 cursor-pointer hover:bg-accent px-2 py-1.5 rounded-lg transition-colors"
             >
               <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center border border-primary/30">
-                <span className="text-primary text-sm" style={{ fontWeight: 600 }}>{initials}</span>
+                <span
+                  className="text-primary text-sm"
+                  style={{ fontWeight: 600 }}
+                >
+                  {initials}
+                </span>
               </div>
-              <span className="hidden sm:block text-sm text-foreground" style={{ fontWeight: 500 }}>
+              <span
+                className="hidden sm:block text-sm text-foreground"
+                style={{ fontWeight: 500 }}
+              >
                 {user.name}
               </span>
             </button>
