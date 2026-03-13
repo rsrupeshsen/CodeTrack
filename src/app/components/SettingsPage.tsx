@@ -1,7 +1,17 @@
 import React from "react";
 
 import { useState } from "react";
-import { Save, Github, Linkedin, Twitter, Globe, Copy, Check, ExternalLink, Loader2 } from "lucide-react";
+import {
+  Save,
+  Github,
+  Linkedin,
+  Twitter,
+  Globe,
+  Copy,
+  Check,
+  ExternalLink,
+  Loader2,
+} from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { useUser } from "./UserContext";
 import { getUser } from "../../lib/auth";
@@ -51,21 +61,34 @@ export function SettingsPage() {
         toast.error("Not logged in. Please log in again.");
         return;
       }
-  
+
       // Strip empty URL fields so Appwrite doesn't reject them
       const cleanForm = {
         ...form,
-        website:  form.website  || null,
+        website: form.website || null,
         linkedin: form.linkedin || null,
-        twitter:  form.twitter  || null,
+        twitter: form.twitter || null,
       };
-  
-      await upsertProfile(appwriteUser.$id, cleanForm);
+
+      await upsertProfile(appwriteUser.$id, {
+        username: cleanForm.username,
+        name: cleanForm.name,
+        bio: cleanForm.bio,
+        techStack: cleanForm.techStack,
+        leetcode: cleanForm.leetcode || null,
+        gfg: cleanForm.gfg || null,
+        github: cleanForm.github || null,
+        website: cleanForm.website || null,
+        linkedin: cleanForm.linkedin || null,
+        twitter: cleanForm.twitter || null,
+      });
       setUser({ ...user, ...form });
       toast.success("Settings saved successfully!");
     } catch (err: any) {
       console.error("Save error:", err);
-      toast.error(`Could not save settings: ${err?.message || "Unknown error"}`);
+      toast.error(
+        `Could not save settings: ${err?.message || "Unknown error"}`,
+      );
     } finally {
       setIsSaving(false);
     }
@@ -86,10 +109,15 @@ export function SettingsPage() {
       />
 
       <div>
-        <h1 className="text-2xl text-foreground mb-1" style={{ fontWeight: 700 }}>
+        <h1
+          className="text-2xl text-foreground mb-1"
+          style={{ fontWeight: 700 }}
+        >
           Profile Settings
         </h1>
-        <p className="text-muted-foreground">Manage your account and coding profiles</p>
+        <p className="text-muted-foreground">
+          Manage your account and coding profiles
+        </p>
       </div>
 
       {/* Profile Info */}
@@ -100,15 +128,25 @@ export function SettingsPage() {
         <div className="space-y-4">
           <div className="flex items-center gap-5 mb-2">
             <div className="w-20 h-20 bg-primary/20 rounded-2xl flex items-center justify-center">
-              <span className="text-primary text-xl" style={{ fontWeight: 700 }}>{initials}</span>
+              <span
+                className="text-primary text-xl"
+                style={{ fontWeight: 700 }}
+              >
+                {initials}
+              </span>
             </div>
-            <button className="text-sm text-primary hover:underline cursor-pointer" style={{ fontWeight: 500 }}>
+            <button
+              className="text-sm text-primary hover:underline cursor-pointer"
+              style={{ fontWeight: 500 }}
+            >
               Change avatar
             </button>
           </div>
 
           <div>
-            <label className="text-sm text-foreground mb-1.5 block">Full Name</label>
+            <label className="text-sm text-foreground mb-1.5 block">
+              Full Name
+            </label>
             <input
               type="text"
               value={form.name}
@@ -119,18 +157,29 @@ export function SettingsPage() {
           </div>
 
           <div>
-            <label className="text-sm text-foreground mb-1.5 block">Your Username</label>
+            <label className="text-sm text-foreground mb-1.5 block">
+              Your Username
+            </label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">@</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                @
+              </span>
               <input
                 type="text"
                 value={form.username}
-                onChange={(e) => update("username", e.target.value.replace(/[^a-zA-Z0-9_]/g, ""))}
+                onChange={(e) =>
+                  update(
+                    "username",
+                    e.target.value.replace(/[^a-zA-Z0-9_]/g, ""),
+                  )
+                }
                 className="w-full bg-input-background border border-border rounded-xl pl-8 pr-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="your_username"
               />
             </div>
-            <p className="text-muted-foreground text-xs mt-1">Only letters, numbers, and underscores</p>
+            <p className="text-muted-foreground text-xs mt-1">
+              Only letters, numbers, and underscores
+            </p>
           </div>
 
           <div>
@@ -145,7 +194,9 @@ export function SettingsPage() {
           </div>
 
           <div>
-            <label className="text-sm text-foreground mb-1.5 block">Tech Stack</label>
+            <label className="text-sm text-foreground mb-1.5 block">
+              Tech Stack
+            </label>
             <input
               type="text"
               value={form.techStack}
@@ -177,7 +228,7 @@ export function SettingsPage() {
           </div>
           <div>
             <label className="text-sm text-foreground mb-1.5 flex items-center gap-2">
-              <span>👨‍🍳</span>  GeeksForGeeks Username
+              <span>👨‍🍳</span> GeeksForGeeks Username
             </label>
             <input
               type="text"
@@ -268,7 +319,9 @@ export function SettingsPage() {
           </button>
         </div>
         {copied && (
-          <p className="text-primary text-xs mt-2" style={{ fontWeight: 500 }}>Copied!</p>
+          <p className="text-primary text-xs mt-2" style={{ fontWeight: 500 }}>
+            Copied!
+          </p>
         )}
       </div>
 
