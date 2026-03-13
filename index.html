@@ -1,17 +1,82 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CodeFolio — Track Your Coding Journey</title>
-    <meta name="description" content="Track your LeetCode, GFG and GitHub progress. Build your developer portfolio and share it with the world." />
+
+    <!-- Primary SEO -->
+    <title>CodeFolio — Track Your LeetCode, GFG & GitHub Progress</title>
+    <meta
+      name="description"
+      content="CodeFolio is a free developer portfolio builder. Track your LeetCode, GeeksForGeeks and GitHub progress, visualize your coding journey, and share a public profile with recruiters."
+    />
+    <meta
+      name="keywords"
+      content="leetcode tracker, coding portfolio, developer portfolio, github stats, geeksforgeeks tracker, coding progress, competitive programming, DSA tracker"
+    />
+    <meta name="author" content="CodeFolio" />
+    <link rel="canonical" href="https://codefolio-v1.vercel.app/" />
+
+    <!-- Open Graph (Facebook, LinkedIn, WhatsApp previews) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://codefolio-v1.vercel.app/" />
+    <meta property="og:title" content="CodeFolio — Track Your Coding Journey" />
+    <meta
+      property="og:description"
+      content="Free developer portfolio builder. Sync LeetCode, GFG and GitHub. Share a beautiful public profile with one link."
+    />
+    <meta
+      property="og:image"
+      content="https://codefolio-v1.vercel.app/og-image.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="CodeFolio" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://codefolio-v1.vercel.app/" />
+    <meta
+      name="twitter:title"
+      content="CodeFolio — Track Your Coding Journey"
+    />
+    <meta
+      name="twitter:description"
+      content="Free developer portfolio builder. Sync LeetCode, GFG and GitHub. Share a beautiful public profile with one link."
+    />
+    <meta
+      name="twitter:image"
+      content="https://codefolio-v1.vercel.app/og-image.png"
+    />
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/codefolio.png" />
     <link rel="shortcut icon" href="/codefolio.png" />
+    <link rel="apple-touch-icon" href="/codefolio.png" />
 
-    <!-- Theme color (browser tab / mobile chrome bar) -->
+    <!-- Theme color -->
     <meta name="theme-color" content="#10b981" />
+
+    <!-- Robots -->
+    <meta name="robots" content="index, follow" />
+
+    <!-- Structured Data — SoftwareApplication schema for Google rich results -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "CodeFolio",
+        "url": "https://codefolio-v1.vercel.app/",
+        "description": "Free developer portfolio builder to track LeetCode, GeeksForGeeks and GitHub progress and share a public coding profile.",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Web",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

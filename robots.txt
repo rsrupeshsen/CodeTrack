@@ -1,0 +1,22 @@
+# CodeFolio — https://codefolio-v1.vercel.app
+# robots.txt
+
+User-agent: *
+
+# Allow public pages
+Allow: /
+Allow: /login
+Allow: /signup
+Allow: /demo
+Allow: /user/
+
+# Block private/app pages — no SEO value, avoid crawl waste
+Disallow: /dashboard/
+Disallow: /onboarding
+Disallow: /auth/
+Disallow: /verify-email
+Disallow: /reset-password
+Disallow: /forgot-password
+
+# Sitemap location
+Sitemap: https://codefolio-v1.vercel.app/sitemap.xml

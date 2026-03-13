@@ -16,6 +16,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useUser } from "./UserContext";
+import { getUser } from "../../lib/auth";
 
 const navItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard", end: true },
@@ -34,6 +35,13 @@ export function DashboardLayout() {
   const location = useLocation();
   const { user, logout } = useUser();
   const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // ✅ Auth guard — redirect to login if no active session
+  useEffect(() => {
+    getUser().then((u) => {
+      if (!u) navigate("/login");
+    });
+  }, []);
 
   // Close sidebar when route changes
   useEffect(() => {
